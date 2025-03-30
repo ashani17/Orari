@@ -7,7 +7,7 @@ namespace Orari.Models
     {
         [Key]
         public int CId { get; set; }
-        public required string Name { get; set; }
+        public required string CName { get; set; }
         public int Credits { get; set; }
         [ForeignKey("PId")]
         public required int PId { get; set; }

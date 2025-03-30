@@ -15,5 +15,10 @@ namespace Orari.Models
         [ForeignKey("SCId")]
         public required int SCId { get; set; }
         public required Schedules Schedule { get; set; }
+
+        [ForeignKey("PId")]
+        public required int PId { get; set; }
+        public required Profesors Profesor { get; set; }
+
     }
 }
