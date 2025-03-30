@@ -10,6 +10,11 @@ namespace Orari.Repository
             throw new NotImplementedException();
         }
 
+        public Task<string?> GetAllEnrollmentsAsync()
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<IEnumerable<Students>> GetCourseStudentsAsync(int courseId)
         {
             throw new NotImplementedException();

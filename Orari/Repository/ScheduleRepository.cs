@@ -25,6 +25,16 @@ namespace Orari.Repository
             throw new NotImplementedException();
         }
 
+        public Task<string?> GetSchedulesByProfesorAsync(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<string?> GetSchedulesByRoomAsync(int id)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<Schedules> UpdateScheduleAsync(Schedules schedule)
         {
             throw new NotImplementedException();
