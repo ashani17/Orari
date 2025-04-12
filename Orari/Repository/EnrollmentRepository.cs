@@ -1,33 +1,90 @@
-﻿using Orari.Interfaces;
+﻿using Orari.DataDbContext;
+using Orari.Interfaces;
 using Orari.Models;
 
 namespace Orari.Repository
 {
+
     public class EnrollmentRepository : IEnrollmentRepository
     {
-        public Task<bool> EnrollStudentAsync(int studentId, int courseId)
+        private readonly AppDbContext _context;
+        public EnrollmentRepository(AppDbContext context)
         {
-            throw new NotImplementedException();
+            _context = context;
+        }
+        public Task<bool> EnrollStudentAsync(int SId, int CId)
+        {
+            var student = _context.Students.FirstOrDefault(s => s.SId == SId);
+            var course = _context.Courses.FirstOrDefault(c => c.CId == CId);
+
+            if (student == null || course == null)
+            {
+                return Task.FromResult(false);
+            }
+
+            var enrollment = new Enrollments
+            {
+                SId = SId,
+                CId = CId,
+                Students = student,
+                Courses = course
+            };
+            _context.Enrollments.Add(enrollment);
+            return _context.SaveChangesAsync().ContinueWith(t => t.Result > 0);
         }
 
         public Task<string?> GetAllEnrollmentsAsync()
         {
-            throw new NotImplementedException();
+            var enrollments = _context.Enrollments
+                .ToList();
+            if (!enrollments.Any())
+            {
+                return Task.FromResult<string?>(null);
+            }
+            // Assuming you want to return a string representation of the enrollments
+            return Task.FromResult(string.Join(", ", enrollments.Select(e => $"{e.Students.SName} enrolled in {e.Courses.CName}")));
+
         }
 
         public Task<IEnumerable<Students>> GetCourseStudentsAsync(int courseId)
         {
-            throw new NotImplementedException();
+            var students = _context.Enrollments
+                .Where(e => e.CId == courseId)
+                .Select(e => e.Students)
+                .ToList();
+            if (!students.Any())
+            {
+                return Task.FromResult<IEnumerable<Students>>(new List<Students>());
+            }
+            return Task.FromResult<IEnumerable<Students>>(students);
+
         }
 
         public Task<IEnumerable<Courses>> GetStudentCoursesAsync(int studentId)
         {
-            throw new NotImplementedException();
+            var courses = _context.Enrollments
+                .Where(e => e.SId == studentId)
+                .Select(e => e.Courses)
+                .ToList();
+            if (!courses.Any())
+            {
+                return Task.FromResult<IEnumerable<Courses>>(new List<Courses>());
+            }
+            return Task.FromResult<IEnumerable<Courses>>(courses);
+
         }
 
         public Task<bool> UnenrollStudentAsync(int studentId, int courseId)
         {
-            throw new NotImplementedException();
+            var enrollment = _context.Enrollments
+                .FirstOrDefault(e => e.SId == studentId && e.CId == courseId);
+            if (enrollment == null)
+            {
+                return Task.FromResult(false);
+            }
+            _context.Enrollments.Remove(enrollment);
+            return _context.SaveChangesAsync().ContinueWith(t => t.Result > 0);
+
         }
     }
 }

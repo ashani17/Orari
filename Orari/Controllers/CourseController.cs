@@ -21,7 +21,7 @@ namespace Orari.Controllers
         public async Task<IActionResult> GetAll()
         {
             var courses = await _courseRepository.GetAllCourses();
-            return View(courses);
+            return Ok(courses);
         }
 
         [HttpGet("{id}")]
@@ -32,7 +32,7 @@ namespace Orari.Controllers
             {
                 return NotFound();
             }
-            return View(course);
+            return Ok(course);
         }
 
         [HttpPost]
@@ -80,9 +80,6 @@ namespace Orari.Controllers
             await _courseRepository.DeleteCourseAsync(id);
             return NoContent();
         }
-        public IActionResult Index()
-        {
-            return View();
-        }
+
     }
 }

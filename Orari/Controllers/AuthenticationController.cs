@@ -18,7 +18,7 @@ namespace Orari.Controllers
         [HttpGet]
         public IActionResult Login()
         {
-            return View();
+            return Ok();
         }
 
         [HttpPost]
@@ -33,13 +33,13 @@ namespace Orari.Controllers
                 }
                 ModelState.AddModelError(string.Empty, "Invalid login attempt.");
             }
-            return View(model);
+            return Ok(model);
         }
 
         [HttpGet]
         public IActionResult Register()
         {
-            return View();
+            return Ok();
         }
 
         [HttpPost]
@@ -59,7 +59,7 @@ namespace Orari.Controllers
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
             }
-            return View(model);
+            return Ok(model);
         }
 
         [HttpPost]

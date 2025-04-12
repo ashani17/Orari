@@ -10,7 +10,7 @@ namespace Orari.DataDbContext
         }
 
         public DbSet<Students> Students { get; set; }
-        public DbSet<Profesors> Professors { get; set; }
+        public DbSet<Profesors> Profesors { get; set; }
         public DbSet<Courses> Courses { get; set; }
         public DbSet<Rooms> Rooms { get; set; }
         public DbSet<Schedules> Schedules { get; set; }

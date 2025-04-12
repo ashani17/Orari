@@ -23,7 +23,7 @@ namespace Orari.Controllers
         public async Task<IActionResult> GetAll()
         {
             var students = await _studentRepository.GetAllStudents();
-            return View(students);
+            return Ok(students);
         }
 
         [HttpGet("{id}")]
@@ -34,7 +34,7 @@ namespace Orari.Controllers
             {
                 return NotFound();
             }
-            return View(student);
+            return Ok(student);
         }
 
         [HttpPost]

@@ -5,6 +5,7 @@ using Orari.Models;
 
 namespace Orari.Controllers
 {
+    [Route("api/schedule")]
     public class ScheduleController : Controller
     {
         private readonly AppDbContext _context;
@@ -20,7 +21,7 @@ namespace Orari.Controllers
         public async Task<IActionResult> GetAll()
         {
             var schedules = await _scheduleRepository.GetAllSchedules();
-            return View(schedules);
+            return Ok(schedules);
         }
 
         [HttpGet("{id}")]
@@ -31,7 +32,7 @@ namespace Orari.Controllers
             {
                 return NotFound();
             }
-            return View(schedule);
+            return Ok(schedule);
         }
 
         [HttpPost]
@@ -43,10 +44,6 @@ namespace Orari.Controllers
             }
             var createdSchedule = await _scheduleRepository.CreateScheduleAsync(schedule);
             return CreatedAtAction(nameof(GetById), new { id = createdSchedule.SCId }, createdSchedule);
-        }
-        public IActionResult Index()
-        {
-            return View();
         }
 
         [HttpPut("{id}")]
@@ -69,7 +66,7 @@ namespace Orari.Controllers
             existingSchedule.Course = schedule.Course;
             existingSchedule.Exam = schedule.Exam;
             var updatedSchedule = await _scheduleRepository.UpdateScheduleAsync(existingSchedule);
-            return View(updatedSchedule);
+            return Ok(updatedSchedule);
         }
 
         [HttpDelete("{id}")]
@@ -88,14 +85,14 @@ namespace Orari.Controllers
         public async Task<IActionResult> GetByProfesor(int id)
         {
             var schedules = await _scheduleRepository.GetSchedulesByProfesorAsync(id);
-            return View(schedules);
+            return Ok(schedules);
         }
 
         [HttpGet("room/{id}")]
         public async Task<IActionResult> GetByRoom(int id)
         {
             var schedules = await _scheduleRepository.GetSchedulesByRoomAsync(id);
-            return View(schedules);
+            return Ok(schedules);
         }
 
     }

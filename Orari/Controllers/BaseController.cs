@@ -31,10 +31,5 @@ namespace Orari.Controllers
         {
             return User?.Identity?.Name ?? "Anonymous";
         }
-
-        public IActionResult Index()
-        {
-            return View();
-        }
     }
 }

@@ -19,7 +19,7 @@ namespace Orari.Controllers
         public async Task<IActionResult> Index()
         {
             var enrollments = await _enrollmentRepository.GetAllEnrollmentsAsync();
-            return View(enrollments);
+            return Ok(enrollments);
         }
 
         [HttpPost]
@@ -48,14 +48,14 @@ namespace Orari.Controllers
         public async Task<IActionResult> GetStudentCourses(int studentId)
         {
             var courses = await _enrollmentRepository.GetStudentCoursesAsync(studentId);
-            return View(courses);
+            return Ok(courses);
         }
 
         [HttpGet("course/{courseId}/students")]
         public async Task<IActionResult> GetCourseStudents(int courseId)
         {
             var students = await _enrollmentRepository.GetCourseStudentsAsync(courseId);
-            return View(students);
+            return Ok(students);
         }
     }
 }

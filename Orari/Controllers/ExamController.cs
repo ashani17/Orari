@@ -5,6 +5,7 @@ using Orari.Models;
 
 namespace Orari.Controllers
 {
+    [Route ("api/exams")]
     public class ExamController : Controller
     {
         private readonly AppDbContext _context;
@@ -20,7 +21,7 @@ namespace Orari.Controllers
         public async Task<IActionResult> GetAll()
         {
             var exams = await _examRepository.GetAllExams();
-            return View(exams);
+            return Ok(exams);
         }
 
         [HttpGet("{id}")]
@@ -31,7 +32,7 @@ namespace Orari.Controllers
             {
                 return NotFound();
             }
-            return View(exam);
+            return Ok(exam);
         }
 
         [HttpPost]
@@ -78,10 +79,6 @@ namespace Orari.Controllers
             }
             await _examRepository.DeleteExamAsync(id);
             return NoContent();
-        }
-        public IActionResult Index()
-        {
-            return View();
         }
     }
 }

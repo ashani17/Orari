@@ -1,33 +1,56 @@
-﻿using Orari.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using Orari.DataDbContext;
+using Orari.Interfaces;
 using Orari.Models;
 
 namespace Orari.Repository
 {
     public class CourseRepository : ICourseRepository
     {
-        public Task<Courses> CreateCourseAsync(Courses course)
+        private readonly AppDbContext _context;
+
+        public CourseRepository(AppDbContext context)
         {
-            throw new NotImplementedException();
+            _context = context;
         }
 
-        public Task<bool> DeleteCourseAsync(int id)
+        public async Task<Courses> CreateCourseAsync(Courses course)
         {
-            throw new NotImplementedException();
+            await _context.Courses.AddAsync(course);
+            await _context.SaveChangesAsync();
+            return course;
         }
 
-        public Task<IEnumerable<Courses>> GetAllCourses()
+        public async Task<bool> DeleteCourseAsync(int id)
         {
-            throw new NotImplementedException();
+            var course = await _context.Courses.FindAsync(id);
+            if (course == null) return false;
+
+            _context.Courses.Remove(course);
+            await _context.SaveChangesAsync();
+            return true;
         }
 
-        public Task<Courses> GetCourseByIdAsync(int id)
+        public async Task<IEnumerable<Courses>> GetAllCourses()
         {
-            throw new NotImplementedException();
+            return await _context.Courses.ToListAsync();
         }
 
-        public Task<Courses> UpdateCourseAsync(Courses course)
+        public async Task<Courses> GetCourseByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            var course = await _context.Courses.FirstOrDefaultAsync(c => c.CId == id);
+            if (course == null) throw new Exception("Course not found");
+            return course;
+        }
+
+        public async Task<Courses> UpdateCourseAsync(Courses course)
+        {
+           var existingCourse = await _context.Courses.FindAsync(course.CId);
+            if (existingCourse == null) throw new Exception("Course not found");
+            existingCourse.CName = course.CName;
+            _context.Courses.Update(course);
+            await _context.SaveChangesAsync();
+            return course;
         }
     }
 }

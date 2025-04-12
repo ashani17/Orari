@@ -5,6 +5,7 @@ using Orari.Models;
 
 namespace Orari.Controllers
 {
+    [Route ("api/rooms")]
     public class RoomController : Controller
     {
         private readonly AppDbContext _context;
@@ -20,18 +21,18 @@ namespace Orari.Controllers
         public async Task<IActionResult> GetAll()
         {
             var rooms = await _roomRepository.GetAllRooms();
-            return View(rooms);
+            return Ok(rooms);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetRoomById(int id)
         {
             var room = await _roomRepository.GetRoomByIdAsync(id);
             if (room == null)
             {
                 return NotFound();
             }
-            return View(room);
+            return Ok(room);
         }
 
         [HttpPost]
@@ -42,7 +43,7 @@ namespace Orari.Controllers
                 return BadRequest();
             }
             var createdRoom = await _roomRepository.CreateRoomAsync(room);
-            return CreatedAtAction(nameof(GetById), new { id = createdRoom.RId }, createdRoom);
+            return CreatedAtAction(nameof(GetRoomById), new { id = createdRoom.RId }, createdRoom);
         }
 
         [HttpPut("{id}")]
@@ -75,10 +76,6 @@ namespace Orari.Controllers
             }
             await _roomRepository.DeleteRoomAsync(id);
             return NoContent();
-        }
-        public IActionResult Index()
-        {
-            return View();
         }
     }
 }

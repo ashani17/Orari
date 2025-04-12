@@ -1,33 +1,62 @@
-﻿using Orari.Interfaces;
+﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Orari.DataDbContext;
+using Orari.Interfaces;
 using Orari.Models;
 
 namespace Orari.Repository
 {
     public class ProfesorRepository : IProfesorRepository
     {
+        private readonly AppDbContext _context;
+        public ProfesorRepository(AppDbContext context)
+        {
+            _context = context;
+        }
+
         public Task<Profesors> CreateProfesorAsync(Profesors profesor)
         {
-            throw new NotImplementedException();
+            var entry = _context.Profesors.Add(profesor);
+            _context.SaveChanges();
+            return Task.FromResult(entry.Entity);
         }
 
         public Task<bool> DeleteProfesorAsync(int id)
         {
-            throw new NotImplementedException();
+            var profesor = _context.Profesors.FirstOrDefault(p => p.PId == id);
+            if (profesor == null) return Task.FromResult(false);
+            _context.Profesors.Remove(profesor);
+            _context.SaveChanges();
+            return Task.FromResult(true);
         }
 
         public Task<IEnumerable<Profesors>> GetAllProfesors()
         {
-            throw new NotImplementedException();
+            var profesors = _context.Profesors.ToList();
+            if (!profesors.Any())
+            {
+                return Task.FromResult<IEnumerable<Profesors>>(new List<Profesors>());
+            }
+            return Task.FromResult<IEnumerable<Profesors>>(profesors);
         }
 
         public Task<Profesors> GetProfesorByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            var profesor = _context.Profesors.FirstOrDefault(p => p.PId == id);
+            if (profesor == null) throw new Exception("Profesor not found");
+            return Task.FromResult(profesor);
         }
 
         public Task<Profesors> UpdateProfesorAsync(Profesors profesor)
         {
-            throw new NotImplementedException();
+            var existingProfesor = _context.Profesors.FirstOrDefault(p => p.PId == profesor.PId);
+            if (existingProfesor == null) throw new Exception("Profesor not found");
+            existingProfesor.PName = profesor.PName;
+            existingProfesor.PEmail = profesor.PEmail;
+            existingProfesor.PPhone = profesor.PPhone;
+            existingProfesor.PSurname = profesor.PSurname;
+            existingProfesor.PSubject = profesor.PSubject;
+            _context.SaveChanges();
+            return Task.FromResult(existingProfesor);
         }
     }
 }
