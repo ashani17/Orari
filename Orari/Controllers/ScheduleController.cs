@@ -2,6 +2,7 @@
 using Orari.DataDbContext;
 using Orari.Interfaces;
 using Orari.Models;
+using Orari.Services;
 
 namespace Orari.Controllers
 {
@@ -9,25 +10,25 @@ namespace Orari.Controllers
     public class ScheduleController : Controller
     {
         private readonly AppDbContext _context;
-        private readonly IScheduleRepository _scheduleRepository;
+        private readonly IScheduleService _scheduleService;
 
-        public ScheduleController(AppDbContext context, IScheduleRepository scheduleRepository)
+        public ScheduleController(AppDbContext context, IScheduleService scheduleService)
         {
             _context = context;
-            _scheduleRepository = scheduleRepository;
+            _scheduleService = scheduleService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var schedules = await _scheduleRepository.GetAllSchedules();
+            var schedules = await _scheduleService.GetAllSchedules();
             return Ok(schedules);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var schedule = await _scheduleRepository.GetScheduleByIdAsync(id);
+            var schedule = await _scheduleService.GetScheduleByIdAsync(id);
             if (schedule == null)
             {
                 return NotFound();
@@ -42,7 +43,7 @@ namespace Orari.Controllers
             {
                 return BadRequest();
             }
-            var createdSchedule = await _scheduleRepository.CreateScheduleAsync(schedule);
+            var createdSchedule = await _scheduleService.CreateScheduleAsync(schedule);
             return CreatedAtAction(nameof(GetById), new { id = createdSchedule.SCId }, createdSchedule);
         }
 
@@ -53,7 +54,7 @@ namespace Orari.Controllers
             {
                 return BadRequest();
             }
-            var existingSchedule = await _scheduleRepository.GetScheduleByIdAsync(id);
+            var existingSchedule = await _scheduleService.GetScheduleByIdAsync(id);
             if (existingSchedule == null)
             {
                 return NotFound();
@@ -65,33 +66,33 @@ namespace Orari.Controllers
             existingSchedule.Room = schedule.Room;
             existingSchedule.Course = schedule.Course;
             existingSchedule.Exam = schedule.Exam;
-            var updatedSchedule = await _scheduleRepository.UpdateScheduleAsync(existingSchedule);
+            var updatedSchedule = await _scheduleService.UpdateScheduleAsync(existingSchedule);
             return Ok(updatedSchedule);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var schedule = await _scheduleRepository.GetScheduleByIdAsync(id);
+            var schedule = await _scheduleService.GetScheduleByIdAsync(id);
             if (schedule == null)
             {
                 return NotFound();
             }
-            await _scheduleRepository.DeleteScheduleAsync(id);
+            await _scheduleService.DeleteScheduleAsync(id);
             return NoContent();
         }
 
         [HttpGet("profesor/{id}")]
         public async Task<IActionResult> GetByProfesor(int id)
         {
-            var schedules = await _scheduleRepository.GetSchedulesByProfesorAsync(id);
+            var schedules = await _scheduleService.GetSchedulesByProfesorAsync(id);
             return Ok(schedules);
         }
 
         [HttpGet("room/{id}")]
         public async Task<IActionResult> GetByRoom(int id)
         {
-            var schedules = await _scheduleRepository.GetSchedulesByRoomAsync(id);
+            var schedules = await _scheduleService.GetSchedulesByRoomAsync(id);
             return Ok(schedules);
         }
 

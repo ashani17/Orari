@@ -9,25 +9,25 @@ namespace Orari.Controllers
     public class ExamController : Controller
     {
         private readonly AppDbContext _context;
-        private readonly IExamRepository _examRepository;
+        private readonly IExamService _examService;
 
-        public ExamController(AppDbContext context, IExamRepository examRepository)
+        public ExamController(AppDbContext context, IExamService examService)
         {
             _context = context;
-            _examRepository = examRepository;
+            _examService = examService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var exams = await _examRepository.GetAllExams();
+            var exams = await _examService.GetAllExams();
             return Ok(exams);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var exam = await _examRepository.GetExamByIdAsync(id);
+            var exam = await _examService.GetExamByIdAsync(id);
             if (exam == null)
             {
                 return NotFound();
@@ -42,7 +42,7 @@ namespace Orari.Controllers
             {
                 return BadRequest();
             }
-            var createdExam = await _examRepository.CreateExamAsync(exam);
+            var createdExam = await _examService.CreateExamAsync(exam);
             return CreatedAtAction(nameof(GetById), new { id = createdExam.EId }, createdExam);
         }
 
@@ -53,7 +53,7 @@ namespace Orari.Controllers
             {
                 return BadRequest();
             }
-            var existingExam = await _examRepository.GetExamByIdAsync(id);
+            var existingExam = await _examService.GetExamByIdAsync(id);
             if (existingExam == null)
             {
                 return NotFound();
@@ -64,7 +64,7 @@ namespace Orari.Controllers
             existingExam.Profesor = exam.Profesor;
             existingExam.Course = exam.Course;
 
-            await _examRepository.UpdateExamAsync(existingExam);
+            await _examService.UpdateExamAsync(existingExam);
 
             return NoContent();
         }
@@ -72,12 +72,12 @@ namespace Orari.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var exam = await _examRepository.GetExamByIdAsync(id);
+            var exam = await _examService.GetExamByIdAsync(id);
             if (exam == null)
             {
                 return NotFound();
             }
-            await _examRepository.DeleteExamAsync(id);
+            await _examService.DeleteExamAsync(id);
             return NoContent();
         }
     }

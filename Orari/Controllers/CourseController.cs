@@ -2,6 +2,7 @@
 using Orari.DataDbContext;
 using Orari.Interfaces;
 using Orari.Models;
+using Orari.Services;
 
 namespace Orari.Controllers
 {
@@ -9,25 +10,25 @@ namespace Orari.Controllers
     public class CourseController : Controller
     {
         private readonly AppDbContext _context;
-        private readonly ICourseRepository _courseRepository;
+        private readonly ICourseService _courseService;
 
-        public CourseController(AppDbContext context, ICourseRepository courseRepository)
+        public CourseController(AppDbContext context, ICourseService courseService)
         {
             _context = context;
-            _courseRepository = courseRepository;
+            _courseService = courseService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var courses = await _courseRepository.GetAllCourses();
+            var courses = await _courseService.GetAllCourses();
             return Ok(courses);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var course = await _courseRepository.GetCourseByIdAsync(id);
+            var course = await _courseService.GetCourseByIdAsync(id);
             if (course == null)
             {
                 return NotFound();
@@ -42,7 +43,9 @@ namespace Orari.Controllers
             {
                 return BadRequest();
             }
-            var createdCourse = await _courseRepository.CreateCourseAsync(course);
+
+            // Pass the required 'CName' parameter along with the course object
+            var createdCourse = await _courseService.CreateCourseAsync(course, course.CName);
             return CreatedAtAction(nameof(GetById), new { id = createdCourse.CId }, createdCourse);
         }
 
@@ -53,18 +56,21 @@ namespace Orari.Controllers
             {
                 return BadRequest();
             }
-            var existingCourse = await _courseRepository.GetCourseByIdAsync(id);
+            var existingCourse = await _courseService.GetCourseByIdAsync(id);
             if (existingCourse == null)
             {
                 return NotFound();
             }
+
+            // Update the properties of the existing course
             existingCourse.CName = course.CName;
             existingCourse.Credits = course.Credits;
             existingCourse.PId = course.PId;
             existingCourse.Professor = course.Professor;
             existingCourse.Enrollments = course.Enrollments;
 
-            await _courseRepository.UpdateCourseAsync(existingCourse);
+            // Pass both the id and the updated course object to the UpdateCourseAsync method
+            await _courseService.UpdateCourseAsync(id, existingCourse);
 
             return NoContent();
         }
@@ -72,12 +78,12 @@ namespace Orari.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var course = await _courseRepository.GetCourseByIdAsync(id);
+            var course = await _courseService.GetCourseByIdAsync(id);
             if (course == null)
             {
                 return NotFound();
             }
-            await _courseRepository.DeleteCourseAsync(id);
+            await _courseService.DeleteCourseAsync(id);
             return NoContent();
         }
 

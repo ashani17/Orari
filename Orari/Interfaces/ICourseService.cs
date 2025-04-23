@@ -8,7 +8,7 @@ namespace Orari.Interfaces
         Task<Courses> GetCourseByIdAsync(int id);
         Task<Courses?> GetCourseByNameAsync(string CName);
         Task<Courses> CreateCourseAsync(Courses course, string CName);
-        Task<bool> UpdateCourseAsync(int id, Courses course);
+        Task<Courses> UpdateCourseAsync(int id, Courses course);
         Task<bool> DeleteCourseAsync(int id);
     }
 }

@@ -5,55 +5,61 @@ namespace Orari.Services
 {
     public class CourseServices : ICourseService
     {
-        private readonly ICourseService _course;
-        public CourseServices(ICourseService course)
+        private readonly ICourseRepository _courseRepository;
+        public CourseServices(ICourseRepository courseRepository)
         {
-            _course = course;
+            _courseRepository = courseRepository;
         }
-        public async Task<Courses> CreateCourseAsync(Courses course, string CName)
+
+        public Task<Courses> CreateCourseAsync(Courses course, string CName)
         {
-            var existingCourse = GetCourseByNameAsync(CName);
+            var existingCourse = _courseRepository.GetCourseByNameAsync(CName);
             if (existingCourse != null)
             {
                 throw new Exception("Course already exists");
             }
-
-            return await _course.CreateCourseAsync(course, CName);
+            return _courseRepository.CreateCourseAsync(course);
         }
 
         public Task<bool> DeleteCourseAsync(int id)
         {
-            var existingCourse = GetCourseByIdAsync(id);
+           var existingCourse = _courseRepository.GetCourseByIdAsync(id);
             if (existingCourse == null)
             {
                 throw new Exception("Course not found");
             }
-            return _course.DeleteCourseAsync(id);
+            return _courseRepository.DeleteCourseAsync(id);
+
         }
 
         public Task<IEnumerable<Courses>> GetAllCourses()
         {
-            return _course.GetAllCourses();
+            return _courseRepository.GetAllCourses();
         }
 
         public Task<Courses> GetCourseByIdAsync(int id)
         {
-            return _course.GetCourseByIdAsync(id);
-        }
-
-        public Task<Courses?> GetCourseByNameAsync(string CName)
-        {
-            return _course.GetCourseByNameAsync(CName);
-        }
-
-        public Task<bool> UpdateCourseAsync(int id, Courses course)
-        {
-            var existingCourse = GetCourseByIdAsync(id);
+            var existingCourse = _courseRepository.GetCourseByIdAsync(id);
             if (existingCourse == null)
             {
                 throw new Exception("Course not found");
             }
-            return _course.UpdateCourseAsync(id, course);
+            return _courseRepository.GetCourseByIdAsync(id);
+        }
+
+        public Task<Courses?> GetCourseByNameAsync(string CName)
+        {
+            var existingCourse = _courseRepository.GetCourseByNameAsync(CName);
+            if (existingCourse == null)
+            {
+                throw new Exception("Course not found");
+            }
+            return _courseRepository.GetCourseByNameAsync(CName);
+        }
+
+        public Task<Courses> UpdateCourseAsync(int id, Courses course)
+        {
+            return _courseRepository.UpdateCourseAsync(course);
         }
     }
 }

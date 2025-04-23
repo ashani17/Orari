@@ -7,25 +7,25 @@ namespace Orari.Controllers
     public class EnrollmentController : Controller
     {
         private readonly AppDbContext _context;
-        private readonly IEnrollmentRepository _enrollmentRepository;
+        private readonly IEnrollmentService _enrollmentService;
 
-        public EnrollmentController(AppDbContext context, IEnrollmentRepository enrollmentRepository)
+        public EnrollmentController(AppDbContext context, IEnrollmentService enrollmentService)
         {
             _context = context;
-            _enrollmentRepository = enrollmentRepository;
+            _enrollmentService = enrollmentService;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var enrollments = await _enrollmentRepository.GetAllEnrollmentsAsync();
+            var enrollments = await _enrollmentService.GetAllEnrollmentsAsync();
             return Ok(enrollments);
         }
 
         [HttpPost]
         public async Task<IActionResult> EnrollStudent(int studentId, int courseId)
         {
-            var result = await _enrollmentRepository.EnrollStudentAsync(studentId, courseId);
+            var result = await _enrollmentService.EnrollStudentAsync(studentId, courseId);
             if (result)
             {
                 return Ok("Student enrolled successfully.");
@@ -36,7 +36,7 @@ namespace Orari.Controllers
         [HttpPost]
         public async Task<IActionResult> UnenrollStudent(int studentId, int courseId)
         {
-            var result = await _enrollmentRepository.UnenrollStudentAsync(studentId, courseId);
+            var result = await _enrollmentService.UnenrollStudentAsync(studentId, courseId);
             if (result)
             {
                 return Ok("Student unenrolled successfully.");
@@ -47,14 +47,14 @@ namespace Orari.Controllers
         [HttpGet("student/{studentId}/courses")]
         public async Task<IActionResult> GetStudentCourses(int studentId)
         {
-            var courses = await _enrollmentRepository.GetStudentCoursesAsync(studentId);
+            var courses = await _enrollmentService.GetStudentCoursesAsync(studentId);
             return Ok(courses);
         }
 
         [HttpGet("course/{courseId}/students")]
         public async Task<IActionResult> GetCourseStudents(int courseId)
         {
-            var students = await _enrollmentRepository.GetCourseStudentsAsync(courseId);
+            var students = await _enrollmentService.GetCourseStudentsAsync(courseId);
             return Ok(students);
         }
     }

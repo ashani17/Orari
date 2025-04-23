@@ -2,7 +2,7 @@
 using Orari.DataDbContext;
 using Orari.Interfaces;
 using Orari.Models;
-using Orari.Repository;
+using Orari.Services;
 
 namespace Orari.Controllers
 {
@@ -10,26 +10,26 @@ namespace Orari.Controllers
     public class StudentController : BaseController
     {
         private readonly AppDbContext _context;
-        private readonly IStudentRepository _studentRepository;
+        private readonly IStudentService _studentService;
 
-        public StudentController(AppDbContext context, IStudentRepository studentRepository, ILogger<BaseController> logger)
+        public StudentController(AppDbContext context, IStudentService studentService, ILogger<BaseController> logger)
             : base(logger)
         {
             _context = context;
-            _studentRepository = studentRepository;
+            _studentService = studentService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var students = await _studentRepository.GetAllStudents();
+            var students = await _studentService.GetAllStudents();
             return Ok(students);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var student = await _studentRepository.GetStudentByIdAsync(id);
+            var student = await _studentService.GetStudentByIdAsync(id);
             if (student == null)
             {
                 return NotFound();
@@ -44,7 +44,7 @@ namespace Orari.Controllers
             {
                 return BadRequest();
             }
-            var createdStudent = await _studentRepository.CreateStudentAsync(student);
+            var createdStudent = await _studentService.CreateStudentAsync(student);
             return CreatedAtAction(nameof(GetById), new { id = createdStudent.SId }, createdStudent);
         }
 
@@ -55,12 +55,12 @@ namespace Orari.Controllers
             {
                 return BadRequest();
             }
-            var existingStudent = await _studentRepository.GetStudentByIdAsync(id);
+            var existingStudent = await _studentService.GetStudentByIdAsync(id);
             if (existingStudent == null)
             {
                 return NotFound();
             }
-            var existingProfesor = await _studentRepository.GetStudentByIdAsync(id);
+            var existingProfesor = await _studentService.GetStudentByIdAsync(id);
             if (existingProfesor == null)
             {
                 return NotFound();
@@ -71,19 +71,19 @@ namespace Orari.Controllers
             existingProfesor.SPassword = student.SPassword;
             existingProfesor.SCreatedAt = student.SCreatedAt;
             existingProfesor.SUpdatedAt = DateTime.Now;
-            await _studentRepository.UpdateStudentAsync(existingProfesor);
+            await _studentService.UpdateStudentAsync(existingProfesor);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var student = await _studentRepository.GetStudentByIdAsync(id);
+            var student = await _studentService.GetStudentByIdAsync(id);
             if (student == null)
             {
                 return NotFound();
             }
-            await _studentRepository.DeleteStudentAsync(id);
+            await _studentService.DeleteStudentAsync(id);
             return NoContent();
         }
     }

@@ -1,15 +1,16 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Orari.Repository;
+using Orari.Services;
 
 namespace Orari.Controllers
 {
     public class AdminController : Controller
     {
-        private readonly EnrollmentRepository _enrollmentRepository;
+        private readonly EnrollmentService _enrollmentService;
 
-        public AdminController(EnrollmentRepository enrollmentRepository)
+        public AdminController(EnrollmentService enrollmentService)
         {
-            _enrollmentRepository = enrollmentRepository;
+            _enrollmentService = enrollmentService;
         }
 
         public async Task<IActionResult> ManageUsers()
@@ -26,7 +27,7 @@ namespace Orari.Controllers
 
         public async Task<IActionResult> ManageEnrollments()
         {
-            var enrollments = await _enrollmentRepository.GetAllEnrollmentsAsync();
+            var enrollments = await _enrollmentService.GetAllEnrollmentsAsync();
             return Ok(enrollments);
         }
     }

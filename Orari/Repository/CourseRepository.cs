@@ -43,6 +43,13 @@ namespace Orari.Repository
             return course;
         }
 
+        public async Task<Courses?> GetCourseByNameAsync(string CName)
+        {
+            var course = await _context.Courses.FirstOrDefaultAsync(c => c.CName == CName);
+            if (course == null) throw new Exception("Course not found");
+            return course;
+        }
+
         public async Task<Courses> UpdateCourseAsync(Courses course)
         {
            var existingCourse = await _context.Courses.FindAsync(course.CId);

@@ -9,26 +9,26 @@ namespace Orari.Controllers
     public class ProfesorController : BaseController
     {
         private readonly AppDbContext _context;
-        private readonly IProfesorRepository _profesorRepository;
+        private readonly IProfesorService _profesorService;
 
-        public ProfesorController(AppDbContext context, IProfesorRepository profesorRepository, ILogger<BaseController> logger)
+        public ProfesorController(AppDbContext context, IProfesorService profesorService, ILogger<BaseController> logger)
             : base(logger)
         {
             _context = context;
-            _profesorRepository = profesorRepository;
+            _profesorService = profesorService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var profesors = await _profesorRepository.GetAllProfesors();
+            var profesors = await _profesorService.GetAllProfesors();
             return Ok(profesors);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var profesor = await _profesorRepository.GetProfesorByIdAsync(id);
+            var profesor = await _profesorService.GetProfesorByIdAsync(id);
             if (profesor == null)
             {
                 return NotFound();
@@ -43,7 +43,7 @@ namespace Orari.Controllers
             {
                 return BadRequest();
             }
-            var createdProfesor = await _profesorRepository.CreateProfesorAsync(profesor);
+            var createdProfesor = await _profesorService.CreateProfesorAsync(profesor);
             return CreatedAtAction(nameof(GetById), new { id = createdProfesor.PId }, createdProfesor);
         }
 
@@ -54,7 +54,7 @@ namespace Orari.Controllers
             {
                 return BadRequest();
             }
-            var existingProfesor = await _profesorRepository.GetProfesorByIdAsync(id);
+            var existingProfesor = await _profesorService.GetProfesorByIdAsync(id);
             if (existingProfesor == null)
             {
                 return NotFound();
@@ -66,19 +66,19 @@ namespace Orari.Controllers
             existingProfesor.PPhone = profesor.PPhone;
             existingProfesor.PCreatedAt = profesor.PCreatedAt;
             existingProfesor.PUpdatedAt = DateTime.Now;
-            await _profesorRepository.UpdateProfesorAsync(existingProfesor);
+            await _profesorService.UpdateProfesorAsync(existingProfesor);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var profesor = await _profesorRepository.GetProfesorByIdAsync(id);
+            var profesor = await _profesorService.GetProfesorByIdAsync(id);
             if (profesor == null)
             {
                 return NotFound();
             }
-            await _profesorRepository.DeleteProfesorAsync(id);
+            await _profesorService.DeleteProfesorAsync(id);
             return NoContent();
         }
     }
