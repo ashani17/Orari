@@ -7,7 +7,7 @@ namespace Orari.Models
         [Key]
         public int PId { get; set; }
         public required string PName { get; set; }
-        public string? PEmail { get; set; }
+        public required string PEmail { get; set; }
         public string? PPhone { get; set; }
         public required string PPassword { get; set; }
         public required string PSurname { get; set; }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Orari.DataDbContext;
+using Orari.DTO.ProfesorDTO;
 using Orari.Interfaces;
 using Orari.Models;
 
@@ -8,13 +9,13 @@ namespace Orari.Controllers
     [Route("api/[controller]")]
     public class ProfesorController : BaseController
     {
-        private readonly AppDbContext _context;
+        
         private readonly IProfesorService _profesorService;
 
-        public ProfesorController(AppDbContext context, IProfesorService profesorService, ILogger<BaseController> logger)
+        public ProfesorController(IProfesorService profesorService, ILogger<BaseController> logger)
             : base(logger)
         {
-            _context = context;
+            
             _profesorService = profesorService;
         }
 
@@ -37,18 +38,31 @@ namespace Orari.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Profesors profesor)
+        public async Task<IActionResult> Create([FromBody] PostProfesorDTO profesor)
         {
             if (profesor == null)
             {
                 return BadRequest();
             }
-            var createdProfesor = await _profesorService.CreateProfesorAsync(profesor);
+            // Create a new instance of the Profesors model
+            var profesorModel = new Profesors
+            {
+                PName = profesor.PName,
+                PSurname = profesor.PSurname,
+                PEmail = profesor.PEmail,
+                PPassword = profesor.PPassword,
+                PPhone = profesor.PPhone,
+                PSubject = profesor.PSubject,
+                Availability = profesor.Availability,
+                SpecialRequirements = profesor.SpecialRequirements,
+                PCreatedAt = DateTime.Now,
+            };
+            var createdProfesor = await _profesorService.CreateProfesorAsync(profesorModel);
             return CreatedAtAction(nameof(GetById), new { id = createdProfesor.PId }, createdProfesor);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Profesors profesor)
+        public async Task<IActionResult> Update(int id, [FromBody] PutProfesorDTO profesor)
         {
             if (profesor == null)
             {
@@ -64,7 +78,6 @@ namespace Orari.Controllers
             existingProfesor.PEmail = profesor.PEmail;
             existingProfesor.PPassword = profesor.PPassword;
             existingProfesor.PPhone = profesor.PPhone;
-            existingProfesor.PCreatedAt = profesor.PCreatedAt;
             existingProfesor.PUpdatedAt = DateTime.Now;
             await _profesorService.UpdateProfesorAsync(existingProfesor);
             return NoContent();

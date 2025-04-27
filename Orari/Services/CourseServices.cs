@@ -6,8 +6,10 @@ namespace Orari.Services
     public class CourseServices : ICourseService
     {
         private readonly ICourseRepository _courseRepository;
-        public CourseServices(ICourseRepository courseRepository)
+        private readonly IProfesorRepository _profesorRepository;
+        public CourseServices(ICourseRepository courseRepository, IProfesorRepository profesorRepository)
         {
+            _profesorRepository = profesorRepository;
             _courseRepository = courseRepository;
         }
 
@@ -17,6 +19,11 @@ namespace Orari.Services
             if (existingCourse != null)
             {
                 throw new Exception("Course already exists");
+            }
+            var existingProfesor = _profesorRepository.GetProfesorByIdAsync(course.PId);
+            if (existingProfesor == null)
+            {
+                throw new Exception("Profesor not found");
             }
             return _courseRepository.CreateCourseAsync(course);
         }

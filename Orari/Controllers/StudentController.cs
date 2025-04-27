@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Orari.DataDbContext;
+using Orari.DTO.StudentDTO;
 using Orari.Interfaces;
 using Orari.Models;
 using Orari.Services;
@@ -9,13 +10,13 @@ namespace Orari.Controllers
     [Route("api/[controller]")]
     public class StudentController : BaseController
     {
-        private readonly AppDbContext _context;
+        
         private readonly IStudentService _studentService;
 
-        public StudentController(AppDbContext context, IStudentService studentService, ILogger<BaseController> logger)
+        public StudentController(IStudentService studentService, ILogger<BaseController> logger)
             : base(logger)
         {
-            _context = context;
+          
             _studentService = studentService;
         }
 
@@ -38,18 +39,30 @@ namespace Orari.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Students student)
+        public async Task<IActionResult> Create([FromBody] PostStudentDTO student)
         {
             if (student == null)
             {
                 return BadRequest();
             }
-            var createdStudent = await _studentService.CreateStudentAsync(student);
+
+            // Map PostStudentDTO to Students model
+            var studentModel = new Students
+            {
+                SName = student.SName,
+                SSurname = student.SSurname,
+                SEmail = student.SEmail,
+                SPassword = student.SPassword,
+                Enrollments = student.Enrollments,
+                SCreatedAt = DateTime.UtcNow,
+            };
+
+            var createdStudent = await _studentService.CreateStudentAsync(studentModel);
             return CreatedAtAction(nameof(GetById), new { id = createdStudent.SId }, createdStudent);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Students student)
+        public async Task<IActionResult> Update(int id, [FromBody] PutStudentDTO student)
         {
             if (student == null)
             {
@@ -60,18 +73,12 @@ namespace Orari.Controllers
             {
                 return NotFound();
             }
-            var existingProfesor = await _studentService.GetStudentByIdAsync(id);
-            if (existingProfesor == null)
-            {
-                return NotFound();
-            }
-            existingProfesor.SName = student.SName;
-            existingProfesor.SSurname = student.SSurname;
-            existingProfesor.SEmail = student.SEmail;
-            existingProfesor.SPassword = student.SPassword;
-            existingProfesor.SCreatedAt = student.SCreatedAt;
-            existingProfesor.SUpdatedAt = DateTime.Now;
-            await _studentService.UpdateStudentAsync(existingProfesor);
+            existingStudent.SName = student.SName;
+            existingStudent.SSurname = student.SSurname;
+            existingStudent.SEmail = student.SEmail;
+            existingStudent.SPassword = student.SPassword;
+
+            await _studentService.UpdateStudentAsync(existingStudent);
             return NoContent();
         }
 

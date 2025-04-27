@@ -1,17 +1,18 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Orari.DataDbContext;
+using Orari.DTO.EnrollmentsDTO;
 using Orari.Interfaces;
 
 namespace Orari.Controllers
 {
     public class EnrollmentController : Controller
     {
-        private readonly AppDbContext _context;
+        
         private readonly IEnrollmentService _enrollmentService;
 
-        public EnrollmentController(AppDbContext context, IEnrollmentService enrollmentService)
+        public EnrollmentController(IEnrollmentService enrollmentService)
         {
-            _context = context;
+            
             _enrollmentService = enrollmentService;
         }
 
@@ -23,9 +24,9 @@ namespace Orari.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> EnrollStudent(int studentId, int courseId)
+        public async Task<IActionResult> EnrollStudent([FromBody] EnrollmentDTO dto)
         {
-            var result = await _enrollmentService.EnrollStudentAsync(studentId, courseId);
+            var result = await _enrollmentService.EnrollStudentAsync(dto.CId, dto.SId);
             if (result)
             {
                 return Ok("Student enrolled successfully.");
@@ -34,9 +35,9 @@ namespace Orari.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> UnenrollStudent(int studentId, int courseId)
+        public async Task<IActionResult> UnenrollStudent([FromBody] EnrollmentDTO dto)
         {
-            var result = await _enrollmentService.UnenrollStudentAsync(studentId, courseId);
+            var result = await _enrollmentService.UnenrollStudentAsync(dto.CId, dto.SId);
             if (result)
             {
                 return Ok("Student unenrolled successfully.");

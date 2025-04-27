@@ -8,17 +8,23 @@ namespace Orari.Models
         [Key]
         public int EId { get; set; }
         public required string ExamName { get; set; }
+        public required DateOnly ExamDate { get; set; }
+        public required TimeOnly StartTime { get; set; }
+        public required TimeOnly EndTime { get; set; }
         [ForeignKey("CId")]
-        public required int CId { get; set; }
-        public DateOnly ExamDate { get; set; }
-        public required Courses Course { get; set; }
+        public int CId { get; set; }
+        public Courses Course { get; set; }
         [ForeignKey("SCId")]
-        public required int SCId { get; set; }
-        public required Schedules Schedule { get; set; }
+        public int SCId { get; set; }
+        public Schedules Schedule { get; set; }
 
         [ForeignKey("PId")]
-        public required int PId { get; set; }
-        public required Profesors Profesor { get; set; }
+        public int PId { get; set; }
+        public Profesors Profesor { get; set; }
+
+        [ForeignKey("RId")]
+        public int RId { get; set; }
+        public Rooms Room { get; set; }
 
     }
 }

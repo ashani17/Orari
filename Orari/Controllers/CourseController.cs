@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Orari.DataDbContext;
+using Orari.DTO.CoursesDTO;
 using Orari.Interfaces;
 using Orari.Models;
 using Orari.Services;
@@ -9,12 +10,12 @@ namespace Orari.Controllers
     [Route("api/[controller]")]
     public class CourseController : Controller
     {
-        private readonly AppDbContext _context;
+       
         private readonly ICourseService _courseService;
 
-        public CourseController(AppDbContext context, ICourseService courseService)
+        public CourseController(ICourseService courseService)
         {
-            _context = context;
+            
             _courseService = courseService;
         }
 
@@ -37,20 +38,27 @@ namespace Orari.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Courses course)
+        public async Task<IActionResult> Create([FromBody] PostCourseDTO course)
         {
             if (course == null)
             {
                 return BadRequest();
             }
 
-            // Pass the required 'CName' parameter along with the course object
-            var createdCourse = await _courseService.CreateCourseAsync(course, course.CName);
+            var courseModel = new Courses
+            {
+                CName = course.CName,
+                Credits = course.Credits,
+                PId = course.Profesor.PId,
+                Profesor = course.Profesor.PName // Fix: Set the required 'Profesor' property
+            };
+
+            var createdCourse = await _courseService.CreateCourseAsync(courseModel, course.CName);
             return CreatedAtAction(nameof(GetById), new { id = createdCourse.CId }, createdCourse);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Courses course)
+        public async Task<IActionResult> Update(int id, [FromBody] PutCourseDTO course)
         {
             if (course == null)
             {
@@ -65,9 +73,9 @@ namespace Orari.Controllers
             // Update the properties of the existing course
             existingCourse.CName = course.CName;
             existingCourse.Credits = course.Credits;
-            existingCourse.PId = course.PId;
-            existingCourse.Professor = course.Professor;
-            existingCourse.Enrollments = course.Enrollments;
+
+            // Fix: Assign the 'PName' property of 'Profesors' to the 'Profesor' string field
+            existingCourse.PId = course.Profesor.PId;
 
             // Pass both the id and the updated course object to the UpdateCourseAsync method
             await _courseService.UpdateCourseAsync(id, existingCourse);

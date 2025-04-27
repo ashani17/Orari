@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Orari.DataDbContext;
+using Orari.DTO.ExamDTO;
 using Orari.Interfaces;
 using Orari.Models;
 
@@ -8,12 +9,12 @@ namespace Orari.Controllers
     [Route ("api/exams")]
     public class ExamController : Controller
     {
-        private readonly AppDbContext _context;
+        
         private readonly IExamService _examService;
 
-        public ExamController(AppDbContext context, IExamService examService)
+        public ExamController(IExamService examService)
         {
-            _context = context;
+            
             _examService = examService;
         }
 
@@ -36,18 +37,33 @@ namespace Orari.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Exams exam)
+        public async Task<IActionResult> Create([FromBody] PostExamDTO exam)
         {
             if (exam == null)
             {
                 return BadRequest();
             }
-            var createdExam = await _examService.CreateExamAsync(exam);
+
+            // Map PostExamDTO to Exams model
+            var examModel = new Exams
+            {
+                ExamName = exam.ExamName,
+                ExamDate = exam.ExamDate,
+                StartTime = exam.StartTime,
+                EndTime = exam.EndTime,
+                SCId = exam.ScheduleId,
+                PId = exam.ProfesorId,
+                CId = exam.CourseId,
+                RId = exam.RoomId,
+            };
+
+            // Pass the mapped Exams model to the service
+            var createdExam = await _examService.CreateExamAsync(examModel);
             return CreatedAtAction(nameof(GetById), new { id = createdExam.EId }, createdExam);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Exams exam)
+        public async Task<IActionResult> Update(int id, [FromBody] PutExamDTO exam)
         {
             if (exam == null)
             {
@@ -60,9 +76,11 @@ namespace Orari.Controllers
             }
             existingExam.ExamName = exam.ExamName;
             existingExam.ExamDate = exam.ExamDate;
-            existingExam.Schedule = exam.Schedule;
-            existingExam.Profesor = exam.Profesor;
-            existingExam.Course = exam.Course;
+            existingExam.StartTime = exam.StartTime;
+            existingExam.EndTime = exam.EndTime;
+            existingExam.SCId = exam.ScheduleId;
+            existingExam.PId = exam.ProfesorId;
+            existingExam.CId = exam.CourseId;
 
             await _examService.UpdateExamAsync(existingExam);
 

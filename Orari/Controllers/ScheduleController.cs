@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Orari.DataDbContext;
+using Orari.DTO.ScheduleDTO;
 using Orari.Interfaces;
 using Orari.Models;
 using Orari.Services;
@@ -9,12 +10,12 @@ namespace Orari.Controllers
     [Route("api/schedule")]
     public class ScheduleController : Controller
     {
-        private readonly AppDbContext _context;
+        
         private readonly IScheduleService _scheduleService;
 
-        public ScheduleController(AppDbContext context, IScheduleService scheduleService)
+        public ScheduleController(IScheduleService scheduleService)
         {
-            _context = context;
+           
             _scheduleService = scheduleService;
         }
 
@@ -37,18 +38,31 @@ namespace Orari.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Schedules schedule)
+        public async Task<IActionResult> Create([FromBody] PostScheduleDTO schedule)
         {
             if (schedule == null)
             {
                 return BadRequest();
             }
-            var createdSchedule = await _scheduleService.CreateScheduleAsync(schedule);
+
+            // Map PostScheduleDTO to Schedules model
+            var scheduleModel = new Schedules
+            {
+                Date = schedule.Date,
+                StartTime = schedule.StartTime,
+                EndTime = schedule.EndTime,
+                Profesor = schedule.Profesor,
+                Room = schedule.Room,
+                Course = schedule.Course,
+                Exam = schedule.Exam,
+            };
+
+            var createdSchedule = await _scheduleService.CreateScheduleAsync(scheduleModel);
             return CreatedAtAction(nameof(GetById), new { id = createdSchedule.SCId }, createdSchedule);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Schedules schedule)
+        public async Task<IActionResult> Update(int id, [FromBody] PutScheduleDTO schedule)
         {
             if (schedule == null)
             {
@@ -66,6 +80,8 @@ namespace Orari.Controllers
             existingSchedule.Room = schedule.Room;
             existingSchedule.Course = schedule.Course;
             existingSchedule.Exam = schedule.Exam;
+
+
             var updatedSchedule = await _scheduleService.UpdateScheduleAsync(existingSchedule);
             return Ok(updatedSchedule);
         }

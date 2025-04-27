@@ -1,24 +1,49 @@
 ﻿using Orari.Interfaces;
 using Orari.Models;
+using Orari.Repository;
 
 namespace Orari.Services
 {
     public class ExamService : IExamService
     {
         private readonly IExamRepository _examRepository;
-        public ExamService(IExamRepository examRepository)
+        private readonly IScheduleRepository _scheduleRepository;
+        private readonly IProfesorRepository _professorRepository;
+        private readonly ICourseRepository _courseRepository;
+        public readonly IRoomRepository _roomRepository;
+        public ExamService(IExamRepository examRepository, IScheduleRepository scheduleRepository, IProfesorRepository profesorRepository, ICourseRepository courseRepository, IRoomRepository roomRepository)
         {
             _examRepository = examRepository;
+            _scheduleRepository = scheduleRepository;
+            _professorRepository = profesorRepository;
+            _courseRepository = courseRepository;
+            _roomRepository = roomRepository;
         }
 
-        public Task<Exams> CreateExamAsync(Exams exam)
+        public async Task<Exams> CreateExamAsync(Exams exam)
         {
-            var existingExam = _examRepository.GetExamByIdAsync(exam.EId);
+            var existingExam = _examRepository.GetExamByNameAsync(exam.ExamName);
             if (existingExam != null)
             {
                 throw new Exception("Exam already exists");
             }
-            return _examRepository.CreateExamAsync(exam);
+            var schedule = await _scheduleRepository.GetScheduleByIdAsync(exam.SCId);
+            if (schedule == null)
+                throw new Exception("Schedule not found.");
+
+            var professor = await _professorRepository.GetProfesorByIdAsync(exam.PId);
+            if (professor == null)
+                throw new Exception("Professor not found.");
+
+            var course = await _courseRepository.GetCourseByIdAsync(exam.CId);
+            if (course == null)
+                throw new Exception("Course not found.");
+
+            var room = await _roomRepository.GetRoomByIdAsync(exam.RId);
+            if (room == null)
+                throw new Exception("Room not found.");
+
+            return await _examRepository.CreateExamAsync(exam);
         }
 
         public Task<bool> DeleteExamAsync(int id)

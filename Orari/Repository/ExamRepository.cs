@@ -57,5 +57,12 @@ namespace Orari.Repository
             _context.SaveChanges();
             return Task.FromResult(existingExam);
         }
+
+        public Task<Exams> GetExamByNameAsync(string name)
+        {
+            var exam = _context.Exams.FirstOrDefault(e => e.ExamName == name);
+            if (exam == null) throw new Exception("Exam not found");
+            return Task.FromResult(exam);
+        }
     }
 }

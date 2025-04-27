@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Orari.DataDbContext;
+using Orari.DTO.RoomDTO;
 using Orari.Interfaces;
 using Orari.Models;
 
@@ -8,12 +9,12 @@ namespace Orari.Controllers
     [Route ("api/rooms")]
     public class RoomController : Controller
     {
-        private readonly AppDbContext _context;
+        
         private readonly IRoomService _roomService;
 
-        public RoomController(AppDbContext context, IRoomService roomService)
+        public RoomController(IRoomService roomService)
         {
-            _context = context;
+            
             _roomService = roomService;
         }
 
@@ -36,18 +37,26 @@ namespace Orari.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Rooms room)
+        public async Task<IActionResult> Create([FromBody] PostRoomDTO room)
         {
             if (room == null)
             {
                 return BadRequest();
             }
-            var createdRoom = await _roomService.CreateRoomAsync(room);
+            // Map the DTO to the entity model
+            var roomModel = new Rooms
+            {
+                RName = room.RName,
+                RCapacity = room.RCapacity,
+                RType = room.RType,
+                RDescription = room.RDescription
+            };
+            var createdRoom = await _roomService.CreateRoomAsync(roomModel);
             return CreatedAtAction(nameof(GetRoomById), new { id = createdRoom.RId }, createdRoom);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Rooms room)
+        public async Task<IActionResult> Update(int id, [FromBody] PutRoomDTO room)
         {
             if (room == null)
             {
