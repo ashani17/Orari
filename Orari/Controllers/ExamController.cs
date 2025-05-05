@@ -26,9 +26,9 @@ namespace Orari.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById([FromBody] GetDelExamDTO dto)
         {
-            var exam = await _examService.GetExamByIdAsync(id);
+            var exam = await _examService.GetExamByIdAsync(dto.EId);
             if (exam == null)
             {
                 return NotFound();
@@ -88,14 +88,14 @@ namespace Orari.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete([FromBody] GetDelExamDTO dto)
         {
-            var exam = await _examService.GetExamByIdAsync(id);
+            var exam = await _examService.GetExamByIdAsync(dto.EId);
             if (exam == null)
             {
                 return NotFound();
             }
-            await _examService.DeleteExamAsync(id);
+            await _examService.DeleteExamAsync(dto.EId);
             return NoContent();
         }
     }

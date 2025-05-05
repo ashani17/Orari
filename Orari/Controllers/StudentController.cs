@@ -8,16 +8,15 @@ using Orari.Services;
 namespace Orari.Controllers
 {
     [Route("api/[controller]")]
-    public class StudentController : BaseController
+    public class StudentController : Controller
     {
-        
         private readonly IStudentService _studentService;
+        private readonly ILogger<StudentController> _logger;
 
-        public StudentController(IStudentService studentService, ILogger<BaseController> logger)
-            : base(logger)
+        public StudentController(IStudentService studentService, ILogger<StudentController> logger)
         {
-          
             _studentService = studentService;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -28,9 +27,9 @@ namespace Orari.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById([FromBody] GetDelStudentDTO dto)
         {
-            var student = await _studentService.GetStudentByIdAsync(id);
+            var student = await _studentService.GetStudentByIdAsync(dto.SId);
             if (student == null)
             {
                 return NotFound();
@@ -83,14 +82,14 @@ namespace Orari.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete([FromBody] GetDelStudentDTO dto)
         {
-            var student = await _studentService.GetStudentByIdAsync(id);
+            var student = await _studentService.GetStudentByIdAsync(dto.SId);
             if (student == null)
             {
                 return NotFound();
             }
-            await _studentService.DeleteStudentAsync(id);
+            await _studentService.DeleteStudentAsync(dto.SId);
             return NoContent();
         }
     }

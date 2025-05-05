@@ -26,9 +26,9 @@ namespace Orari.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetRoomById(int id)
+        public async Task<IActionResult> GetRoomById([FromBody] GetDelRoomDTO dto)
         {
-            var room = await _roomService.GetRoomByIdAsync(id);
+            var room = await _roomService.GetRoomByIdAsync(dto.RId);
             if (room == null)
             {
                 return NotFound();
@@ -76,14 +76,14 @@ namespace Orari.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete([FromBody] GetDelRoomDTO dto)
         {
-            var room = await _roomService.GetRoomByIdAsync(id);
+            var room = await _roomService.GetRoomByIdAsync(dto.RId);
             if (room == null)
             {
                 return NotFound();
             }
-            await _roomService.DeleteRoomAsync(id);
+            await _roomService.DeleteRoomAsync(dto.RId);
             return NoContent();
         }
     }

@@ -7,16 +7,15 @@ using Orari.Models;
 namespace Orari.Controllers
 {
     [Route("api/[controller]")]
-    public class ProfesorController : BaseController
+    public class ProfesorController : Controller
     {
-        
         private readonly IProfesorService _profesorService;
+        private readonly ILogger<ProfesorController> _logger;
 
-        public ProfesorController(IProfesorService profesorService, ILogger<BaseController> logger)
-            : base(logger)
+        public ProfesorController(IProfesorService profesorService, ILogger<ProfesorController> logger)
         {
-            
             _profesorService = profesorService;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -27,9 +26,9 @@ namespace Orari.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById([FromBody] GetDelProfesorDTO dto)
         {
-            var profesor = await _profesorService.GetProfesorByIdAsync(id);
+            var profesor = await _profesorService.GetProfesorByIdAsync(dto.PId);
             if (profesor == null)
             {
                 return NotFound();
@@ -84,14 +83,14 @@ namespace Orari.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete([FromBody] GetDelProfesorDTO dto)
         {
-            var profesor = await _profesorService.GetProfesorByIdAsync(id);
+            var profesor = await _profesorService.GetProfesorByIdAsync(dto.PId);
             if (profesor == null)
             {
                 return NotFound();
             }
-            await _profesorService.DeleteProfesorAsync(id);
+            await _profesorService.DeleteProfesorAsync(dto.PId);
             return NoContent();
         }
     }

@@ -27,9 +27,9 @@ namespace Orari.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById([FromBody] GetDelCourseDTO dto)
         {
-            var course = await _courseService.GetCourseByIdAsync(id);
+            var course = await _courseService.GetCourseByIdAsync(dto.CId);
             if (course == null)
             {
                 return NotFound();
@@ -84,14 +84,14 @@ namespace Orari.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete([FromBody] GetDelCourseDTO dto)
         {
-            var course = await _courseService.GetCourseByIdAsync(id);
+            var course = await _courseService.GetCourseByIdAsync(dto.CId);
             if (course == null)
             {
                 return NotFound();
             }
-            await _courseService.DeleteCourseAsync(id);
+            await _courseService.DeleteCourseAsync(dto.CId);
             return NoContent();
         }
 

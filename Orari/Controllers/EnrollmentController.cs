@@ -7,12 +7,12 @@ namespace Orari.Controllers
 {
     public class EnrollmentController : Controller
     {
-        
+
         private readonly IEnrollmentService _enrollmentService;
 
         public EnrollmentController(IEnrollmentService enrollmentService)
         {
-            
+
             _enrollmentService = enrollmentService;
         }
 
@@ -46,16 +46,16 @@ namespace Orari.Controllers
         }
 
         [HttpGet("student/{studentId}/courses")]
-        public async Task<IActionResult> GetStudentCourses(int studentId)
+        public async Task<IActionResult> GetStudentCourses([FromBody] EnrollmentDTO dto)
         {
-            var courses = await _enrollmentService.GetStudentCoursesAsync(studentId);
+            var courses = await _enrollmentService.GetStudentCoursesAsync(dto.SId);
             return Ok(courses);
         }
 
         [HttpGet("course/{courseId}/students")]
-        public async Task<IActionResult> GetCourseStudents(int courseId)
+        public async Task<IActionResult> GetCourseStudents([FromBody] EnrollmentDTO dto)
         {
-            var students = await _enrollmentService.GetCourseStudentsAsync(courseId);
+            var students = await _enrollmentService.GetCourseStudentsAsync(dto.CId);
             return Ok(students);
         }
     }
