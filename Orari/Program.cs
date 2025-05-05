@@ -5,6 +5,10 @@ using Microsoft.OpenApi.Models;
 using Orari.DataDbContext;
 using Orari.Interfaces;
 using Orari.Repository;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Orari.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,9 +31,43 @@ builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
 builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 
+// Register services with the DI container
+builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<IExamService, ExamService>();
+builder.Services.AddScoped<ICourseService, CourseServices>();
+builder.Services.AddScoped<IProfesorService, ProfesorService>();
+builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IScheduleService, ScheduleService>();
+builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+
+
 // Add Swagger services
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(jwtSettings["Key"]!))  // Make sure your key is at least 32 characters
+    };
+});
+builder.Services.AddScoped<JwtTokenGenerator>();
 
 var app = builder.Build();
 

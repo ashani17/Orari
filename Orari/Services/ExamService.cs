@@ -31,7 +31,7 @@ namespace Orari.Services
             if (schedule == null)
                 throw new Exception("Schedule not found.");
 
-            var professor = await _professorRepository.GetProfesorByIdAsync(exam.PId);
+            var professor = await _professorRepository.GetProfesorByEmailAsync(exam.PId);
             if (professor == null)
                 throw new Exception("Professor not found.");
 

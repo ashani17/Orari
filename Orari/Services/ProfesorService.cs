@@ -10,44 +10,54 @@ namespace Orari.Services
         {
             _profesorRepository = profesorRepository;
         }
-        public Task<Profesors> CreateProfesorAsync(Profesors profesor)
+        public async Task<Profesors> CreateProfesorAsync(Profesors profesor)
         {
-            var existingProfesor = _profesorRepository.GetProfesorByIdAsync(profesor.PId);
+            var existingProfesor = await _profesorRepository.GetProfesorByEmailAsync(profesor.PEmail);
             if (existingProfesor != null)
             {
                 throw new Exception("Profesor already exists");
             }
-            return _profesorRepository.CreateProfesorAsync(profesor);
+            return await _profesorRepository.CreateProfesorAsync(profesor);
         }
 
-        public Task<bool> DeleteProfesorAsync(int id)
+        public async Task<bool> DeleteProfesorAsync(int id)
         {
-            var existingProfesor = _profesorRepository.GetProfesorByIdAsync(id);
+            var existingProfesor = await _profesorRepository.GetProfesorByEmailAsync(id);
             if (existingProfesor == null)
             {
                 throw new Exception("Profesor not found");
             }
-            return _profesorRepository.DeleteProfesorAsync(id);
+            return await _profesorRepository.DeleteProfesorAsync(id);
         }
 
-        public Task<IEnumerable<Profesors>> GetAllProfesors()
+        public async Task<IEnumerable<Profesors>> GetAllProfesors()
         {
-            return _profesorRepository.GetAllProfesors();
+            return await _profesorRepository.GetAllProfesors();
         }
 
-        public Task<Profesors> GetProfesorByIdAsync(int id)
+        public Task<Profesors?> GetProfesorByEmailAsync(string PEmail)
         {
-            var profesor = _profesorRepository.GetProfesorByIdAsync(id);
+            var existingProfesor = _profesorRepository.GetProfesorByEmailAsync(PEmail);
+            if (existingProfesor == null)
+            {
+                throw new Exception("Profesor not found");
+            }
+            return existingProfesor;
+        }
+
+        public async Task<Profesors> GetProfesorByIdAsync(int id)
+        {
+            var profesor = await _profesorRepository.GetProfesorByEmailAsync(id);
             if (profesor == null)
             {
                 throw new Exception("Profesor not found");
             }
-            return _profesorRepository.GetProfesorByIdAsync(id);
+            return await _profesorRepository.GetProfesorByEmailAsync(id);
         }
 
-        public Task<Profesors> UpdateProfesorAsync(Profesors profesor)
+        public async Task<Profesors> UpdateProfesorAsync(Profesors profesor)
         {
-            return _profesorRepository.UpdateProfesorAsync(profesor);
+            return await _profesorRepository.UpdateProfesorAsync(profesor);
         }
     }
 }

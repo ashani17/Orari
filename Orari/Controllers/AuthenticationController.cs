@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Orari.DTO.AuthenticationDTO;
+using Orari.Services;
 using Orari.ViewModels;
 
 namespace Orari.Controllers
@@ -8,11 +10,13 @@ namespace Orari.Controllers
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly JwtTokenGenerator _jwtTokenGenerator;
 
-        public AuthenticationController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
+        public AuthenticationController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager,JwtTokenGenerator jwtTokenGenerator)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _jwtTokenGenerator = jwtTokenGenerator;
         }
 
         [HttpGet]
@@ -22,18 +26,24 @@ namespace Orari.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login(LoginViewModel model)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDTO loginRequestDTO)
         {
             if (ModelState.IsValid)
             {
-                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
-                if (result.Succeeded)
-                {
-                    return RedirectToAction("Index", "Home");
-                }
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                var user = await _userManager.FindByEmailAsync(loginRequestDTO.Email);
+                if (user == null)
+                    return Unauthorized("Invalid email or password.");
+
+                var isValid = await _userManager.CheckPasswordAsync(user, loginRequestDTO.Password);
+                if (!isValid)
+                    return Unauthorized("Invalid email or password.");
+
+                var token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email!);
+                return Ok(new { Token = token });
             }
-            return Ok(model);
+
+            // Return BadRequest if ModelState is invalid
+            return BadRequest("Invalid login request.");
         }
 
         [HttpGet]
