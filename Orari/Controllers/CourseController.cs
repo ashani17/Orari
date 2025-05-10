@@ -53,7 +53,7 @@ namespace Orari.Controllers
                 Profesor = course.Profesor.PEmail // Fix: Set the required 'Profesor' property
             };
 
-            var createdCourse = await _courseService.CreateCourseAsync(courseModel, course.CName);
+            var createdCourse = await _courseService.CreateCourseAsync(courseModel);
             return CreatedAtAction(nameof(GetById), new { id = createdCourse.CId }, createdCourse);
         }
 

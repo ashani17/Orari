@@ -35,6 +35,10 @@ namespace Orari.Repository
             return await Task.FromResult(_context.Schedules.ToList());
         }
 
+        public async Task<Schedules> GetScheduleByDateAndTimeAsync(DateOnly date, TimeOnly starttime, TimeOnly endtime)
+        {
+            return await _context.Schedules.FirstOrDefaultAsync(s => s.Date == date && s.StartTime == starttime && s.EndTime == endtime);
+        }
         public async Task<Schedules> GetScheduleByIdAsync(int id)
         {
             var schedule = await _context.Schedules.FirstOrDefaultAsync(s => s.SCId == id);
@@ -72,7 +76,6 @@ namespace Orari.Repository
             // Assuming you want to return a string representation of the schedules
             return string.Join(", ", schedules.Select(s => $"{s.Date} {s.StartTime}-{s.EndTime}"));
         }
-
         public async Task<Schedules> UpdateScheduleAsync(Schedules schedule)
         {
             var existingSchedule = await _context.Schedules.FindAsync(schedule.SCId);

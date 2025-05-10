@@ -13,9 +13,9 @@ namespace Orari.Services
             _courseRepository = courseRepository;
         }
 
-        public async Task<Courses> CreateCourseAsync(Courses course, string CName)
+        public async Task<Courses> CreateCourseAsync(Courses course)
         {
-            var existingCourse = await _courseRepository.GetCourseByNameAsync(CName);
+            var existingCourse = await _courseRepository.GetCourseByNameAsync(course.CName);
             if (existingCourse != null)
             {
                 throw new Exception("Course already exists");
@@ -26,6 +26,11 @@ namespace Orari.Services
                 throw new Exception("Profesor not found");
             }
             return await _courseRepository.CreateCourseAsync(course);
+        }
+
+        public Task<Courses> CreateCourseAsync(Courses course, string CName)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<bool> DeleteCourseAsync(int id)

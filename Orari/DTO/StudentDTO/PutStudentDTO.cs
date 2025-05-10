@@ -27,7 +27,6 @@ namespace Orari.DTO.StudentDTO
 
         [StringLength(20, ErrorMessage = "Password cannot be longer than 20 characters.")]
         public string SPassword { get; set; } = string.Empty;
-        public ICollection<Enrollments> Enrollments { get; set; } = new List<Enrollments>();
         public DateTime SUpdatedAt { get; set; } = DateTime.Now;
     }
 }
