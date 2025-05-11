@@ -44,6 +44,13 @@ namespace Orari.Repository
             return Task.FromResult(student);
         }
 
+        public async Task<Students> GetStudentsByEmailAsync(string email)
+        {
+            var student = _context.Students.FirstOrDefault(s => s.SEmail == email);
+            if (student == null) return (null);
+            return (student);
+        }
+
         public Task<Students> UpdateStudentAsync(Students student)
         {
             var existingStudent = _context.Students.Find(student.SId);

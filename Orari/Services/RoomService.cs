@@ -11,43 +11,53 @@ namespace Orari.Services
             _roomRepository = roomRepository;
         }
 
-        public Task<Rooms> CreateRoomAsync(Rooms room)
+        public async Task<Rooms> CreateRoomAsync(Rooms room)
         {
-            var existingRoom = _roomRepository.GetRoomByIdAsync(room.RId);
-            if (existingRoom == null)
+            var existingRoom = await _roomRepository.GetRoomByNameAsync(room.RName);
+            if (existingRoom != null)
             {
                 throw new Exception("Room already exists");
             }
-            return _roomRepository.CreateRoomAsync(room);
+            return await _roomRepository.CreateRoomAsync(room);
         }
-        public Task<bool> DeleteRoomAsync(int id)
+        public async Task<bool> DeleteRoomAsync(int id)
         {
-            var existingRoom = _roomRepository.GetRoomByIdAsync(id);
+            var existingRoom = await _roomRepository.GetRoomByIdAsync(id);
             if (existingRoom == null)
             {
                 throw new Exception("Room not found");
             }
-            return _roomRepository.DeleteRoomAsync(id);
+            return await _roomRepository.DeleteRoomAsync(id);
         }
 
-        public Task<IEnumerable<Rooms>> GetAllRooms()
+        public async Task<IEnumerable<Rooms>> GetAllRooms()
         {
-            return _roomRepository.GetAllRooms();
+            return await _roomRepository.GetAllRooms();
         }
 
-        public Task<Rooms> GetRoomByIdAsync(int id)
+        public async Task<Rooms> GetRoomByIdAsync(int id)
         {
-            var room = _roomRepository.GetRoomByIdAsync(id);
+            var room = await _roomRepository.GetRoomByIdAsync(id);
             if (room == null)
             {
                 throw new Exception("Room not found");
             }
-            return _roomRepository.GetRoomByIdAsync(id);
+            return await _roomRepository.GetRoomByIdAsync(id);
         }
 
-        public Task<Rooms> UpdateRoomAsync(Rooms room)
+        public async Task<Rooms?> GetRoomByNameAsync(string name)
         {
-            return _roomRepository.UpdateRoomAsync(room);
+            var room = await _roomRepository.GetRoomByNameAsync(name);
+            if (room == null)
+            {
+                throw new Exception("Room not found");
+            }
+            return await _roomRepository.GetRoomByNameAsync(name);
+        }
+
+        public async Task<Rooms> UpdateRoomAsync(Rooms room)
+        {
+            return await _roomRepository.UpdateRoomAsync(room);
         }
     }
 }

@@ -6,6 +6,7 @@ namespace Orari.Interfaces
     {
         Task<IEnumerable<Schedules>> GetAllSchedules();
         Task<Schedules> GetScheduleByIdAsync(int id);
+        Task<Schedules> GetScheduleByDateAndTimeAsync(DateOnly date, TimeOnly starttime, TimeOnly endtime);
         Task<Schedules> CreateScheduleAsync(Schedules schedule);
         Task<Schedules> UpdateScheduleAsync(Schedules schedule);
         Task<bool> DeleteScheduleAsync(int id);

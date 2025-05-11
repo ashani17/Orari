@@ -52,7 +52,6 @@ namespace Orari.Controllers
                 SSurname = student.SSurname,
                 SEmail = student.SEmail,
                 SPassword = student.SPassword,
-                Enrollments = student.Enrollments,
                 SCreatedAt = DateTime.UtcNow,
             };
 

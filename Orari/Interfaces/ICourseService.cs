@@ -6,8 +6,8 @@ namespace Orari.Interfaces
     {
         Task<IEnumerable<Courses>> GetAllCourses();
         Task<Courses> GetCourseByIdAsync(int id);
-        Task<Courses?> GetCourseByNameAsync(string CName);
-        Task<Courses> CreateCourseAsync(Courses course, string CName);
+        Task<Courses> GetCourseByNameAsync(string CName);
+        Task<Courses> CreateCourseAsync(Courses course);
         Task<Courses> UpdateCourseAsync(int id, Courses course);
         Task<bool> DeleteCourseAsync(int id);
     }

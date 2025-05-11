@@ -38,24 +38,24 @@ namespace Orari.Repository
 
         public async Task<Courses> GetCourseByIdAsync(int id)
         {
-            var course = await _context.Courses.FirstOrDefaultAsync(c => c.CId == id);
-            if (course == null) throw new Exception("Course not found");
-            return course;
+            return await _context.Courses.FindAsync(id);
         }
 
         public async Task<Courses?> GetCourseByNameAsync(string CName)
         {
-            var course = await _context.Courses.FirstOrDefaultAsync(c => c.CName == CName);
-            if (course == null) throw new Exception("Course not found");
-            return course;
+            return await _context.Courses.FirstOrDefaultAsync(c => c.CName == CName);
         }
 
         public async Task<Courses> UpdateCourseAsync(Courses course)
         {
-           var existingCourse = await _context.Courses.FindAsync(course.CId);
+            var existingCourse = await _context.Courses.FindAsync(course.CId);
             if (existingCourse == null) throw new Exception("Course not found");
+
             existingCourse.CName = course.CName;
+
+            // Fix: Replace `await _context.Courses.Update(course);` with `_context.Courses.Update(course);`
             _context.Courses.Update(course);
+
             await _context.SaveChangesAsync();
             return course;
         }

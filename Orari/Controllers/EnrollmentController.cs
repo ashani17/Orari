@@ -1,10 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Orari.DataDbContext;
 using Orari.DTO.EnrollmentsDTO;
 using Orari.Interfaces;
 
 namespace Orari.Controllers
 {
+    [ApiController]
+    [Route("api/[controller]")]
     public class EnrollmentController : Controller
     {
 
@@ -34,7 +35,7 @@ namespace Orari.Controllers
             return BadRequest("Failed to enroll student.");
         }
 
-        [HttpPost]
+        [HttpPut]
         public async Task<IActionResult> UnenrollStudent([FromBody] EnrollmentDTO dto)
         {
             var result = await _enrollmentService.UnenrollStudentAsync(dto.CId, dto.SId);
