@@ -32,18 +32,26 @@ namespace Orari.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateStudyProgramAsync([FromBody] StudyPrograms studyProgram)
+        public async Task<IActionResult> CreateStudyProgramAsync([FromBody] PostStudyProgramDTO studyProgram)
         {
             if (studyProgram == null)
             {
                 return BadRequest();
             }
-            var createdStudyProgram = await _studyProgramService.CreateStudyProgramAsync(studyProgram);
+
+            // Map the DTO to the StudyPrograms model
+            var studyProgramModel = new StudyPrograms
+            {
+                SPName = studyProgram.SPName,
+                DId = studyProgram.DId,
+            };
+
+            var createdStudyProgram = await _studyProgramService.CreateStudyProgramAsync(studyProgramModel);
             return CreatedAtAction(nameof(GetStudyProgramByIdAsync), new { id = createdStudyProgram.SPId }, createdStudyProgram);
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateStudyProgramAsync(int id, [FromBody] StudyPrograms studyProgram)
+        public async Task<IActionResult> UpdateStudyProgramAsync(int id, [FromBody] PutStudyProgramDTO studyProgram)
         {
             var existingStudyProgram = await _studyProgramService.GetStudyProgramsByNameAsync(studyProgram.SPName);
             if (existingStudyProgram == null)
@@ -51,10 +59,14 @@ namespace Orari.Controllers
                 return NotFound();
             }
 
-            // Use the existing study program's ID to update the record
-            studyProgram.SPId = existingStudyProgram.SPId;
+            // Map the DTO to the StudyPrograms model
+            var studyProgramModel = new StudyPrograms
+            {
+                SPName = studyProgram.SPName,
+                DId = studyProgram.DId
+            };
 
-            var updatedStudyProgram = await _studyProgramService.UpdateStudyProgramAsync(studyProgram);
+            var updatedStudyProgram = await _studyProgramService.UpdateStudyProgramAsync(studyProgramModel);
             return Ok(updatedStudyProgram);
         }
 
