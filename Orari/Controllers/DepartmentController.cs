@@ -56,14 +56,11 @@ namespace Orari.Controllers
             // Map the DTO to the Departments model
             var departmentModel = new Departments
             {
+                DId = id, // Ensure the ID is set
                 DName = department.DName
             };
 
             var updatedDepartment = await _departmentService.UpdateDepartmentAsync(departmentModel);
-            if (updatedDepartment == null)
-            {
-                return NotFound();
-            }
             return Ok(updatedDepartment);
         }
         [HttpDelete("{id}")]

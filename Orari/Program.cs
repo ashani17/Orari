@@ -41,6 +41,8 @@ builder.Services.AddScoped<IProfesorService, ProfesorService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+builder.Services.AddScoped<IStudyProgramService, StudyProgramService>();
 
 
 // Add Swagger services

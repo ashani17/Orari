@@ -12,7 +12,7 @@ namespace Orari.Services
         }
         public async Task<Departments> CreateDepartmentAsync(Departments department)
         {
-            var existingDepartment = _departmentRepository.GetDepartmentByNameAsync(department.DName);
+            var existingDepartment = await _departmentRepository.GetDepartmentByNameAsync(department.DName);
             if (existingDepartment != null)
             {
                 throw new Exception("Department already exists");
@@ -39,13 +39,13 @@ namespace Orari.Services
             {
                 throw new Exception("Department not found");
             }
-            return await _departmentRepository.GetDepartmentByIdAsync(id);
+            return existingDepartment;
         }
 
         public async Task<Departments> GetDepartmentByNameAsync(string name)
         {
             var existingDepartment = await _departmentRepository.GetDepartmentByNameAsync(name);
-            if (existingDepartment == null)
+            if (existingDepartment != null)
             {
                 throw new Exception("Department not found");
             }

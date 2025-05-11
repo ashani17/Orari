@@ -50,14 +50,12 @@ namespace Orari.Repository
 
         public async Task<Departments> GetDepartmentByNameAsync(string name)
         {
-            var department = await _context.Departments.FirstOrDefaultAsync(d => d.DName == name);
-            if (department == null) throw new Exception("Department not found");
-            return department; // Removed incorrect usage of 'Result'
+           return await _context.Departments.FirstOrDefaultAsync(d => d.DName == name);
         }
 
         public async Task<Departments> UpdateDepartmentAsync(Departments department)
         {
-            var existingDepartment = await _context.Departments.FirstOrDefaultAsync(d => d.DName == department.DName);
+            var existingDepartment = await _context.Departments.FirstOrDefaultAsync(d => d.DId == department.DId);
             if (existingDepartment == null)
                 throw new Exception("Department not found");
 
