@@ -50,10 +50,10 @@ namespace Orari.Controllers
                 CName = course.CName,
                 Credits = course.Credits,
                 PId = course.Profesor.PId,
-                Profesor = course.Profesor.PName // Fix: Set the required 'Profesor' property
+                Profesor = course.Profesor.PEmail // Fix: Set the required 'Profesor' property
             };
 
-            var createdCourse = await _courseService.CreateCourseAsync(courseModel, course.CName);
+            var createdCourse = await _courseService.CreateCourseAsync(courseModel);
             return CreatedAtAction(nameof(GetById), new { id = createdCourse.CId }, createdCourse);
         }
 

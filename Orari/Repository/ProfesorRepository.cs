@@ -39,7 +39,14 @@ namespace Orari.Repository
             return Task.FromResult<IEnumerable<Profesors>>(profesors);
         }
 
-        public Task<Profesors> GetProfesorByIdAsync(int id)
+        public Task<Profesors?> GetProfesorByEmailAsync(string email)
+        {
+            var profesor = _context.Profesors.FirstOrDefault(p => p.PEmail == email);
+            if (profesor == null) return Task.FromResult<Profesors?>(null);
+            return Task.FromResult<Profesors?>(profesor);
+        }
+
+        public Task<Profesors> GetProfesorByEmailAsync(int id)
         {
             var profesor = _context.Profesors.FirstOrDefault(p => p.PId == id);
             if (profesor == null) throw new Exception("Profesor not found");

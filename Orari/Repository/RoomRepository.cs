@@ -1,4 +1,5 @@
-﻿using Orari.DataDbContext;
+﻿using Microsoft.EntityFrameworkCore;
+using Orari.DataDbContext;
 using Orari.Interfaces;
 using Orari.Models;
 
@@ -11,18 +12,18 @@ namespace Orari.Repository
         {
             _context = context;
         }
-        public Task<Rooms> CreateRoomAsync(Rooms room)
+        public async Task<Rooms> CreateRoomAsync(Rooms room)
         {
             _context.Rooms.Add(room);
-            return _context.SaveChangesAsync().ContinueWith(t => t.Result > 0 ? room : null);
+            return await _context.SaveChangesAsync().ContinueWith(t => t.Result > 0 ? room : null);
         }
 
-        public Task<bool> DeleteRoomAsync(int id)
+        public async Task<bool> DeleteRoomAsync(int id)
         {
-            var room = _context.Rooms.Find(id);
-            if (room == null) return Task.FromResult(false);
+            var room = await _context.Rooms.FindAsync(id); // Use FindAsync for async operation
+            if (room == null) return false; // Return a boolean directly
             _context.Rooms.Remove(room);
-            return _context.SaveChangesAsync().ContinueWith(t => t.Result > 0);
+            return await _context.SaveChangesAsync() > 0; // Await the async operation and return a boolean
         }
 
         public Task<IEnumerable<Rooms>> GetAllRooms()
@@ -35,11 +36,14 @@ namespace Orari.Repository
             return Task.FromResult<IEnumerable<Rooms>>(rooms);
         }
 
-        public Task<Rooms> GetRoomByIdAsync(int id)
+        public async Task<Rooms> GetRoomByIdAsync(int id)
         {
-            var room = _context.Rooms.FirstOrDefault(r => r.RId == id);
-            if (room == null) throw new Exception("Room not found");
-            return Task.FromResult(room);
+            return await _context.Rooms.FirstOrDefaultAsync(r => r.RId == id);
+        }
+
+        public async Task<Rooms?> GetRoomByNameAsync(string name)
+        {
+            return await _context.Rooms.FirstOrDefaultAsync(r => r.RName == name);
         }
 
         public Task<Rooms> UpdateRoomAsync(Rooms room)

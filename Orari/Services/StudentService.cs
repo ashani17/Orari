@@ -1,4 +1,5 @@
-﻿using Orari.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using Orari.Interfaces;
 using Orari.Models;
 
 namespace Orari.Services
@@ -25,7 +26,7 @@ namespace Orari.Services
         }
         public async Task<Students> CreateStudentAsync(Students student)
         {
-            var existingStudent = await _studentRepository.GetStudentByIdAsync(student.SId);
+            var existingStudent = await _studentRepository.GetStudentsByEmailAsync(student.SEmail);
             if (existingStudent != null)
             {
                 throw new Exception("Student already exists");
@@ -44,6 +45,16 @@ namespace Orari.Services
                 throw new Exception("Student not found");
             }
             return await _studentRepository.DeleteStudentAsync(id);
+        }
+
+        public async Task<Students> GetStudentsByEmailAsync(string email)
+        {
+            var student = await _studentRepository.GetStudentsByEmailAsync(email);
+            if (student == null)
+            {
+                throw new Exception("Student not found");
+            }
+            return student;
         }
     }
 }

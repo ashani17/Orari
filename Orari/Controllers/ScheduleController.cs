@@ -3,6 +3,7 @@ using Orari.DataDbContext;
 using Orari.DTO.ScheduleDTO;
 using Orari.Interfaces;
 using Orari.Models;
+using Orari.Repository;
 using Orari.Services;
 
 namespace Orari.Controllers
@@ -12,11 +13,19 @@ namespace Orari.Controllers
     {
         
         private readonly IScheduleService _scheduleService;
+        private readonly IRoomService _roomService;
+        private readonly IProfesorService _profesorService;
+        private readonly ICourseService _courseService;
+        private readonly IExamService _examService;
 
-        public ScheduleController(IScheduleService scheduleService)
+        public ScheduleController(IScheduleService scheduleService, IExamService examService, IRoomService roomService, IProfesorService profesorService, ICourseService courseService)
         {
            
             _scheduleService = scheduleService;
+            _courseService = courseService;
+            _examService = examService;
+            _roomService = roomService;
+            _profesorService = profesorService;
         }
 
         [HttpGet]
@@ -38,27 +47,26 @@ namespace Orari.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] PostScheduleDTO schedule)
+        public async Task<IActionResult> CreateScheduleAsync([FromBody] PostScheduleDTO schedule)
         {
             if (schedule == null)
             {
                 return BadRequest();
             }
-
-            // Map PostScheduleDTO to Schedules model
+            // Map the PostScheduleDTO to the Schedules model
             var scheduleModel = new Schedules
             {
                 Date = schedule.Date,
                 StartTime = schedule.StartTime,
                 EndTime = schedule.EndTime,
-                Profesor = schedule.Profesor,
                 Room = schedule.Room,
-                Course = schedule.Course,
-                Exam = schedule.Exam,
+                Profesor = schedule.Profesor,
+                Course = schedule.Course
             };
 
+            // Pass the mapped Schedules object to the service
             var createdSchedule = await _scheduleService.CreateScheduleAsync(scheduleModel);
-            return CreatedAtAction(nameof(GetById), new { id = createdSchedule.SCId }, createdSchedule);
+            return Ok(createdSchedule);
         }
 
         [HttpPut("{id}")]
