@@ -1,19 +1,18 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Orari.DTO.EnrollmentsDTO;
+using Orari.DataDbContext;
+using Orari.DTO.EnrollmentDTO;
 using Orari.Interfaces;
 
 namespace Orari.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
     public class EnrollmentController : Controller
     {
-
+        
         private readonly IEnrollmentService _enrollmentService;
 
         public EnrollmentController(IEnrollmentService enrollmentService)
         {
-
+            
             _enrollmentService = enrollmentService;
         }
 
@@ -35,7 +34,7 @@ namespace Orari.Controllers
             return BadRequest("Failed to enroll student.");
         }
 
-        [HttpPut]
+        [HttpPost]
         public async Task<IActionResult> UnenrollStudent([FromBody] EnrollmentDTO dto)
         {
             var result = await _enrollmentService.UnenrollStudentAsync(dto.CId, dto.SId);
@@ -47,16 +46,16 @@ namespace Orari.Controllers
         }
 
         [HttpGet("student/{studentId}/courses")]
-        public async Task<IActionResult> GetStudentCourses([FromBody] EnrollmentDTO dto)
+        public async Task<IActionResult> GetStudentCourses(int studentId)
         {
-            var courses = await _enrollmentService.GetStudentCoursesAsync(dto.SId);
+            var courses = await _enrollmentService.GetStudentCoursesAsync(studentId);
             return Ok(courses);
         }
 
         [HttpGet("course/{courseId}/students")]
-        public async Task<IActionResult> GetCourseStudents([FromBody] EnrollmentDTO dto)
+        public async Task<IActionResult> GetCourseStudents(int courseId)
         {
-            var students = await _enrollmentService.GetCourseStudentsAsync(dto.CId);
+            var students = await _enrollmentService.GetCourseStudentsAsync(courseId);
             return Ok(students);
         }
     }

@@ -46,7 +46,7 @@ namespace Orari.Migrations
 
                     b.HasKey("CId");
 
-                    b.ToTable("Courses", (string)null);
+                    b.ToTable("Courses");
                 });
 
             modelBuilder.Entity("Orari.Models.Departments", b =>
@@ -63,7 +63,7 @@ namespace Orari.Migrations
 
                     b.HasKey("DId");
 
-                    b.ToTable("Departments", (string)null);
+                    b.ToTable("Departments");
                 });
 
             modelBuilder.Entity("Orari.Models.Enrollments", b =>
@@ -86,7 +86,7 @@ namespace Orari.Migrations
 
                     b.HasIndex("SId");
 
-                    b.ToTable("Enrollments", (string)null);
+                    b.ToTable("Enrollments");
                 });
 
             modelBuilder.Entity("Orari.Models.Exams", b =>
@@ -139,7 +139,7 @@ namespace Orari.Migrations
 
                     b.HasIndex("RoomRId");
 
-                    b.ToTable("Exams", (string)null);
+                    b.ToTable("Exams");
                 });
 
             modelBuilder.Entity("Orari.Models.Profesors", b =>
@@ -187,7 +187,7 @@ namespace Orari.Migrations
 
                     b.HasKey("PId");
 
-                    b.ToTable("Profesors", (string)null);
+                    b.ToTable("Profesors");
                 });
 
             modelBuilder.Entity("Orari.Models.Rooms", b =>
@@ -215,7 +215,7 @@ namespace Orari.Migrations
 
                     b.HasKey("RId");
 
-                    b.ToTable("Rooms", (string)null);
+                    b.ToTable("Rooms");
                 });
 
             modelBuilder.Entity("Orari.Models.Schedules", b =>
@@ -264,7 +264,7 @@ namespace Orari.Migrations
                     b.HasIndex("EId")
                         .IsUnique();
 
-                    b.ToTable("Schedules", (string)null);
+                    b.ToTable("Schedules");
                 });
 
             modelBuilder.Entity("Orari.Models.Students", b =>
@@ -297,14 +297,9 @@ namespace Orari.Migrations
                     b.Property<DateTime>("SUpdatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("StudyProgramsSPId")
-                        .HasColumnType("int");
-
                     b.HasKey("SId");
 
-                    b.HasIndex("StudyProgramsSPId");
-
-                    b.ToTable("Students", (string)null);
+                    b.ToTable("Students");
                 });
 
             modelBuilder.Entity("Orari.Models.StudyProgramCourse", b =>
@@ -318,22 +313,16 @@ namespace Orari.Migrations
                     b.Property<int>("CId")
                         .HasColumnType("int");
 
-                    b.Property<int>("CourseCId")
-                        .HasColumnType("int");
-
                     b.Property<int>("SPId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StudyProgramSPId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CourseCId");
+                    b.HasIndex("CId");
 
-                    b.HasIndex("StudyProgramSPId");
+                    b.HasIndex("SPId");
 
-                    b.ToTable("StudyProgramCourses", (string)null);
+                    b.ToTable("StudyProgramCourses");
                 });
 
             modelBuilder.Entity("Orari.Models.StudyPrograms", b =>
@@ -347,18 +336,15 @@ namespace Orari.Migrations
                     b.Property<int>("DId")
                         .HasColumnType("int");
 
-                    b.Property<int>("DepartmentsDId")
-                        .HasColumnType("int");
-
                     b.Property<string>("SPName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("SPId");
 
-                    b.HasIndex("DepartmentsDId");
+                    b.HasIndex("DId");
 
-                    b.ToTable("StudyPrograms", (string)null);
+                    b.ToTable("StudyPrograms");
                 });
 
             modelBuilder.Entity("Orari.Models.Enrollments", b =>
@@ -370,7 +356,7 @@ namespace Orari.Migrations
                         .IsRequired();
 
                     b.HasOne("Orari.Models.Students", "Students")
-                        .WithMany("Enrollments")
+                        .WithMany()
                         .HasForeignKey("SId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -418,24 +404,17 @@ namespace Orari.Migrations
                     b.Navigation("Exam");
                 });
 
-            modelBuilder.Entity("Orari.Models.Students", b =>
-                {
-                    b.HasOne("Orari.Models.StudyPrograms", null)
-                        .WithMany("Students")
-                        .HasForeignKey("StudyProgramsSPId");
-                });
-
             modelBuilder.Entity("Orari.Models.StudyProgramCourse", b =>
                 {
                     b.HasOne("Orari.Models.Courses", "Course")
                         .WithMany("StudyProgramCourse")
-                        .HasForeignKey("CourseCId")
+                        .HasForeignKey("CId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Orari.Models.StudyPrograms", "StudyProgram")
                         .WithMany("StudyProgramCourse")
-                        .HasForeignKey("StudyProgramSPId")
+                        .HasForeignKey("SPId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -448,7 +427,7 @@ namespace Orari.Migrations
                 {
                     b.HasOne("Orari.Models.Departments", "Departments")
                         .WithMany("StudyPrograms")
-                        .HasForeignKey("DepartmentsDId")
+                        .HasForeignKey("DId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -473,15 +452,8 @@ namespace Orari.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Orari.Models.Students", b =>
-                {
-                    b.Navigation("Enrollments");
-                });
-
             modelBuilder.Entity("Orari.Models.StudyPrograms", b =>
                 {
-                    b.Navigation("Students");
-
                     b.Navigation("StudyProgramCourse");
                 });
 #pragma warning restore 612, 618

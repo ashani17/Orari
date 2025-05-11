@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Orari.DTO.EnrollmentsDTO
+namespace Orari.DTO.EnrollmentDTO
 {
     public class EnrollmentDTO
     {

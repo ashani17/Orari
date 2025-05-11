@@ -29,6 +29,26 @@ namespace Orari.DataDbContext
                 .HasForeignKey<Schedules>(s => s.EId);
 
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<StudyProgramCourse>()
+                .HasKey(spc => spc.Id); // Or composite key if applicable
+
+            modelBuilder.Entity<StudyProgramCourse>()
+                .HasOne(spc => spc.StudyProgram)
+                .WithMany(sp => sp.StudyProgramCourse)
+                .HasForeignKey(spc => spc.SPId);
+
+            modelBuilder.Entity<StudyProgramCourse>()
+                .HasOne(spc => spc.Course)
+                .WithMany(c => c.StudyProgramCourse)
+                .HasForeignKey(spc => spc.CId);
+
+            modelBuilder.Entity<StudyPrograms>()
+                .HasOne(sp => sp.Departments)
+                .WithMany(d => d.StudyPrograms)
+                .HasForeignKey(sp => sp.DId);
         }
+
+
     }
 }
