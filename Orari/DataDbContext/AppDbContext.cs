@@ -16,6 +16,9 @@ namespace Orari.DataDbContext
         public DbSet<Schedules> Schedules { get; set; }
         public DbSet<Enrollments> Enrollments { get; set; }
         public DbSet<Exams> Exams { get; set; }
+        public DbSet<Departments> Departments { get; set; }
+        public DbSet<StudyPrograms> StudyPrograms { get; set; }
+        public DbSet<StudyProgramCourse> StudyProgramCourses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -27,9 +30,5 @@ namespace Orari.DataDbContext
 
             base.OnModelCreating(modelBuilder);
         }
-    }
-
-    public class Departments
-    {
     }
 }
