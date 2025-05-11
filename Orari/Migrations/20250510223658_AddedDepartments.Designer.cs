@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Orari.DataDbContext;
 
@@ -11,9 +12,11 @@ using Orari.DataDbContext;
 namespace Orari.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250510223658_AddedDepartments")]
+    partial class AddedDepartments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -46,7 +49,7 @@ namespace Orari.Migrations
 
                     b.HasKey("CId");
 
-                    b.ToTable("Courses", (string)null);
+                    b.ToTable("Courses");
                 });
 
             modelBuilder.Entity("Orari.Models.Departments", b =>
@@ -63,7 +66,7 @@ namespace Orari.Migrations
 
                     b.HasKey("DId");
 
-                    b.ToTable("Departments", (string)null);
+                    b.ToTable("Departments");
                 });
 
             modelBuilder.Entity("Orari.Models.Enrollments", b =>
@@ -86,7 +89,7 @@ namespace Orari.Migrations
 
                     b.HasIndex("SId");
 
-                    b.ToTable("Enrollments", (string)null);
+                    b.ToTable("Enrollments");
                 });
 
             modelBuilder.Entity("Orari.Models.Exams", b =>
@@ -139,7 +142,7 @@ namespace Orari.Migrations
 
                     b.HasIndex("RoomRId");
 
-                    b.ToTable("Exams", (string)null);
+                    b.ToTable("Exams");
                 });
 
             modelBuilder.Entity("Orari.Models.Profesors", b =>
@@ -187,7 +190,7 @@ namespace Orari.Migrations
 
                     b.HasKey("PId");
 
-                    b.ToTable("Profesors", (string)null);
+                    b.ToTable("Profesors");
                 });
 
             modelBuilder.Entity("Orari.Models.Rooms", b =>
@@ -215,7 +218,7 @@ namespace Orari.Migrations
 
                     b.HasKey("RId");
 
-                    b.ToTable("Rooms", (string)null);
+                    b.ToTable("Rooms");
                 });
 
             modelBuilder.Entity("Orari.Models.Schedules", b =>
@@ -264,7 +267,7 @@ namespace Orari.Migrations
                     b.HasIndex("EId")
                         .IsUnique();
 
-                    b.ToTable("Schedules", (string)null);
+                    b.ToTable("Schedules");
                 });
 
             modelBuilder.Entity("Orari.Models.Students", b =>
@@ -304,7 +307,7 @@ namespace Orari.Migrations
 
                     b.HasIndex("StudyProgramsSPId");
 
-                    b.ToTable("Students", (string)null);
+                    b.ToTable("Students");
                 });
 
             modelBuilder.Entity("Orari.Models.StudyProgramCourse", b =>
@@ -333,7 +336,7 @@ namespace Orari.Migrations
 
                     b.HasIndex("StudyProgramSPId");
 
-                    b.ToTable("StudyProgramCourses", (string)null);
+                    b.ToTable("StudyProgramCourses");
                 });
 
             modelBuilder.Entity("Orari.Models.StudyPrograms", b =>
@@ -358,7 +361,7 @@ namespace Orari.Migrations
 
                     b.HasIndex("DepartmentsDId");
 
-                    b.ToTable("StudyPrograms", (string)null);
+                    b.ToTable("StudyPrograms");
                 });
 
             modelBuilder.Entity("Orari.Models.Enrollments", b =>

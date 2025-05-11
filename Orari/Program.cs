@@ -30,6 +30,8 @@ builder.Services.AddScoped<IProfesorRepository, ProfesorRepository>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
 builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
+builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+builder.Services.AddScoped<IStudyProgramRepository, StudyProgramRepository>();
 
 // Register services with the DI container
 builder.Services.AddScoped<IStudentService, StudentService>();

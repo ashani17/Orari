@@ -13,5 +13,6 @@ namespace Orari.Models
         public int PId { get; set; }
         public required string Profesor { get; set; }
         public ICollection<Enrollments> Enrollments { get; set; }
+        public ICollection<StudyProgramCourse> StudyProgramCourse { get; set; } = new List<StudyProgramCourse>();
     }
 }

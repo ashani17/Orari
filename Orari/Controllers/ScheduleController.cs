@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Orari.DataDbContext;
+using Orari.DTO.ProfesorDTO;
+using Orari.DTO.RoomDTO;
 using Orari.DTO.ScheduleDTO;
 using Orari.Interfaces;
 using Orari.Models;
@@ -11,7 +13,7 @@ namespace Orari.Controllers
     [Route("api/schedule")]
     public class ScheduleController : Controller
     {
-        
+
         private readonly IScheduleService _scheduleService;
         private readonly IRoomService _roomService;
         private readonly IProfesorService _profesorService;
@@ -20,7 +22,7 @@ namespace Orari.Controllers
 
         public ScheduleController(IScheduleService scheduleService, IExamService examService, IRoomService roomService, IProfesorService profesorService, ICourseService courseService)
         {
-           
+
             _scheduleService = scheduleService;
             _courseService = courseService;
             _examService = examService;
@@ -36,9 +38,9 @@ namespace Orari.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById([FromBody] GetDelScheduleDTO dto)
         {
-            var schedule = await _scheduleService.GetScheduleByIdAsync(id);
+            var schedule = await _scheduleService.GetScheduleByIdAsync(dto.SCId);
             if (schedule == null)
             {
                 return NotFound();
@@ -95,28 +97,28 @@ namespace Orari.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete([FromBody] GetDelScheduleDTO dto)
         {
-            var schedule = await _scheduleService.GetScheduleByIdAsync(id);
+            var schedule = await _scheduleService.GetScheduleByIdAsync(dto.SCId);
             if (schedule == null)
             {
                 return NotFound();
             }
-            await _scheduleService.DeleteScheduleAsync(id);
+            await _scheduleService.DeleteScheduleAsync(dto.SCId);
             return NoContent();
         }
 
         [HttpGet("profesor/{id}")]
-        public async Task<IActionResult> GetByProfesor(int id)
+        public async Task<IActionResult> GetByProfesor([FromBody] GetDelProfesorDTO dto)
         {
-            var schedules = await _scheduleService.GetSchedulesByProfesorAsync(id);
+            var schedules = await _scheduleService.GetSchedulesByProfesorAsync(dto.PId);
             return Ok(schedules);
         }
 
         [HttpGet("room/{id}")]
-        public async Task<IActionResult> GetByRoom(int id)
+        public async Task<IActionResult> GetByRoom([FromBody] GetDelRoomDTO dto)
         {
-            var schedules = await _scheduleService.GetSchedulesByRoomAsync(id);
+            var schedules = await _scheduleService.GetSchedulesByRoomAsync(dto.RId);
             return Ok(schedules);
         }
 
