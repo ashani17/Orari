@@ -22,26 +22,40 @@ namespace Orari.Services
 
         public async Task<Exams> CreateExamAsync(Exams exam)
         {
-            var existingExam = _examRepository.GetExamByNameAsync(exam.ExamName);
-            if (existingExam != null)
+            // Basic validation
+            if (string.IsNullOrEmpty(exam.ExamName))
             {
-                throw new Exception("Exam already exists");
+                throw new Exception("Exam name is required");
             }
-            var schedule = await _scheduleRepository.GetScheduleByIdAsync(exam.SCId);
-            if (schedule == null)
-                throw new Exception("Schedule not found.");
 
-            var professor = await _professorRepository.GetProfesorByEmailAsync(exam.PId);
-            if (professor == null)
-                throw new Exception("Professor not found.");
-
+            // Validate Course
             var course = await _courseRepository.GetCourseByIdAsync(exam.CId);
             if (course == null)
-                throw new Exception("Course not found.");
+            {
+                throw new Exception("Course not found");
+            }
+            
+            // Set both Course IDs
+            exam.CId = course.CId;
+            exam.Course = course;
 
+            // Validate Professor
+            var professor = await _professorRepository.GetProfesorByEmailAsync(exam.PId);
+            if (professor == null)
+            {
+                throw new Exception("Professor not found");
+            }
+
+            // Set both Professor IDs
+            exam.PId = professor.PId;
+            exam.Profesor = professor;
+
+            // Validate Room
             var room = await _roomRepository.GetRoomByIdAsync(exam.RId);
             if (room == null)
-                throw new Exception("Room not found.");
+            {
+                throw new Exception("Room not found");
+            }
 
             return await _examRepository.CreateExamAsync(exam);
         }

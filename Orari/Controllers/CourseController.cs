@@ -10,12 +10,10 @@ namespace Orari.Controllers
     [Route("api/[controller]")]
     public class CourseController : Controller
     {
-       
         private readonly ICourseService _courseService;
 
         public CourseController(ICourseService courseService)
         {
-            
             _courseService = courseService;
         }
 
@@ -50,11 +48,18 @@ namespace Orari.Controllers
                 CName = course.CName,
                 Credits = course.Credits,
                 PId = course.Profesor.PId,
-                Profesor = course.Profesor.PEmail // Fix: Set the required 'Profesor' property
+                Profesor = course.Profesor.PEmail
             };
 
-            var createdCourse = await _courseService.CreateCourseAsync(courseModel);
-            return CreatedAtAction(nameof(GetById), new { id = createdCourse.CId }, createdCourse);
+            try
+            {
+                var createdCourse = await _courseService.CreateCourseAsync(courseModel, course.StudyProgramId);
+                return CreatedAtAction(nameof(GetById), new { id = createdCourse.CId }, createdCourse);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("{id}")]
@@ -95,5 +100,18 @@ namespace Orari.Controllers
             return NoContent();
         }
 
+        [HttpGet("studyprogram/{studyProgramId}")]
+        public async Task<IActionResult> GetCoursesByStudyProgram(int studyProgramId)
+        {
+            try
+            {
+                var courses = await _courseService.GetCoursesByStudyProgramAsync(studyProgramId);
+                return Ok(courses);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

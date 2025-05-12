@@ -5,6 +5,8 @@ using Orari.Interfaces;
 
 namespace Orari.Controllers
 {
+    [ApiController]
+    [Route("api/[controller]")]
     public class EnrollmentController : Controller
     {
         
@@ -23,10 +25,10 @@ namespace Orari.Controllers
             return Ok(enrollments);
         }
 
-        [HttpPost]
+        [HttpPost("enroll")]
         public async Task<IActionResult> EnrollStudent([FromBody] EnrollmentDTO dto)
         {
-            var result = await _enrollmentService.EnrollStudentAsync(dto.CId, dto.SId);
+            var result = await _enrollmentService.EnrollStudentAsync(dto.SId, dto.CId);
             if (result)
             {
                 return Ok("Student enrolled successfully.");
@@ -34,10 +36,10 @@ namespace Orari.Controllers
             return BadRequest("Failed to enroll student.");
         }
 
-        [HttpPost]
+        [HttpPost("unenroll")]
         public async Task<IActionResult> UnenrollStudent([FromBody] EnrollmentDTO dto)
         {
-            var result = await _enrollmentService.UnenrollStudentAsync(dto.CId, dto.SId);
+            var result = await _enrollmentService.UnenrollStudentAsync(dto.SId, dto.CId);
             if (result)
             {
                 return Ok("Student unenrolled successfully.");
@@ -57,6 +59,34 @@ namespace Orari.Controllers
         {
             var students = await _enrollmentService.GetCourseStudentsAsync(courseId);
             return Ok(students);
+        }
+
+        [HttpGet("student/email/{email}/courses")]
+        public async Task<IActionResult> GetStudentCoursesByEmail(string email)
+        {
+            try
+            {
+                var courses = await _enrollmentService.GetStudentCoursesByEmailAsync(email);
+                return Ok(courses);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("course/name/{courseName}/students")]
+        public async Task<IActionResult> GetCourseStudentsByName(string courseName)
+        {
+            try
+            {
+                var students = await _enrollmentService.GetCourseStudentsByNameAsync(courseName);
+                return Ok(students);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

@@ -9,5 +9,7 @@ namespace Orari.Interfaces
         Task<IEnumerable<Courses>> GetStudentCoursesAsync(int studentId);
         Task<IEnumerable<Students>> GetCourseStudentsAsync(int courseId);
         Task<string?> GetAllEnrollmentsAsync();
+        Task<IEnumerable<Courses>> GetStudentCoursesByEmailAsync(string email);
+        Task<IEnumerable<Students>> GetCourseStudentsByNameAsync(string courseName);
     }
 }

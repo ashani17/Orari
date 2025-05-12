@@ -11,7 +11,7 @@ namespace Orari.Models
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
         [ForeignKey("RId")]
-        public int RId {  get; set; }
+        public int RId { get; set; }
         public required string Room { get; set; }
         [ForeignKey("PId")]
         public int PId { get; set; }
@@ -20,7 +20,7 @@ namespace Orari.Models
         public int CId { get; set; }
         public required string Course { get; set; }
         [ForeignKey("EId")]
-        public int EId { get; set; }
-        public Exams Exam { get; set; }
+        public int? EId { get; set; }
+        public Exams? Exam { get; set; }
     }
 }

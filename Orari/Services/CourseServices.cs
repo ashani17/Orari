@@ -7,13 +7,19 @@ namespace Orari.Services
     {
         private readonly ICourseRepository _courseRepository;
         private readonly IProfesorRepository _profesorRepository;
-        public CourseServices(ICourseRepository courseRepository, IProfesorRepository profesorRepository)
+        private readonly IStudyProgramRepository _studyProgramRepository;
+
+        public CourseServices(
+            ICourseRepository courseRepository, 
+            IProfesorRepository profesorRepository,
+            IStudyProgramRepository studyProgramRepository)
         {
             _profesorRepository = profesorRepository;
             _courseRepository = courseRepository;
+            _studyProgramRepository = studyProgramRepository;
         }
 
-        public async Task<Courses> CreateCourseAsync(Courses course)
+        public async Task<Courses> CreateCourseAsync(Courses course, int studyProgramId)
         {
             var existingCourse = await _courseRepository.GetCourseByNameAsync(course.CName);
             if (existingCourse != null)
@@ -25,12 +31,19 @@ namespace Orari.Services
             {
                 throw new Exception("Profesor not found");
             }
-            return await _courseRepository.CreateCourseAsync(course);
-        }
-
-        public Task<Courses> CreateCourseAsync(Courses course, string CName)
-        {
-            throw new NotImplementedException();
+            var studyProgram = await _studyProgramRepository.GetStudyProgramByIdAsync(studyProgramId);
+            if (studyProgram == null)
+            {
+                throw new Exception("Study program not found");
+            }
+            var createdCourse = await _courseRepository.CreateCourseAsync(course);
+            var studyProgramCourse = new StudyProgramCourse
+            {
+                CId = createdCourse.CId,
+                SPId = studyProgramId
+            };
+            await _courseRepository.AddCourseToStudyProgramAsync(studyProgramCourse);
+            return createdCourse;
         }
 
         public async Task<bool> DeleteCourseAsync(int id)
@@ -72,6 +85,17 @@ namespace Orari.Services
         public async Task<Courses> UpdateCourseAsync(int id, Courses course)
         {
             return await _courseRepository.UpdateCourseAsync(course);
+        }
+
+        public async Task<IEnumerable<Courses>> GetCoursesByStudyProgramAsync(int studyProgramId)
+        {
+            var studyProgram = await _studyProgramRepository.GetStudyProgramByIdAsync(studyProgramId);
+            if (studyProgram == null)
+            {
+                throw new Exception("Study program not found");
+            }
+            
+            return await _courseRepository.GetCoursesByStudyProgramAsync(studyProgramId);
         }
     }
 }

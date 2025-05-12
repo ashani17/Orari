@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Orari.DataDbContext;
+using Orari.DTO.ExamDTO;
 using Orari.DTO.ProfesorDTO;
 using Orari.DTO.RoomDTO;
 using Orari.DTO.ScheduleDTO;
@@ -51,24 +52,36 @@ namespace Orari.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateScheduleAsync([FromBody] PostScheduleDTO schedule)
         {
-            if (schedule == null)
+            try
             {
-                return BadRequest();
-            }
-            // Map the PostScheduleDTO to the Schedules model
-            var scheduleModel = new Schedules
-            {
-                Date = schedule.Date,
-                StartTime = schedule.StartTime,
-                EndTime = schedule.EndTime,
-                Room = schedule.Room,
-                Profesor = schedule.Profesor,
-                Course = schedule.Course
-            };
+                if (schedule == null)
+                {
+                    return BadRequest("Schedule data is required");
+                }
 
-            // Pass the mapped Schedules object to the service
-            var createdSchedule = await _scheduleService.CreateScheduleAsync(scheduleModel);
-            return Ok(createdSchedule);
+                // Map the PostScheduleDTO to the Schedules model
+                var scheduleModel = new Schedules
+                {
+                    Date = schedule.Date,
+                    StartTime = schedule.StartTime,
+                    EndTime = schedule.EndTime,
+                    RId = schedule.RId,
+                    PId = schedule.PId,
+                    CId = schedule.CId,
+                    Room = schedule.Room,
+                    Profesor = schedule.Profesor,
+                    Course = schedule.Course,
+                    EId = null,  // No exam initially
+                    Exam = null
+                };
+
+                var createdSchedule = await _scheduleService.CreateScheduleAsync(scheduleModel);
+                return Ok(createdSchedule);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("{id}")]
@@ -120,6 +133,46 @@ namespace Orari.Controllers
         {
             var schedules = await _scheduleService.GetSchedulesByRoomAsync(dto.RId);
             return Ok(schedules);
+        }
+
+        [HttpPost("{id}/exam")]
+        public async Task<IActionResult> AddExamToSchedule(int id, [FromBody] AddExamToScheduleDTO examDto)
+        {
+            try
+            {
+                var schedule = await _scheduleService.GetScheduleByIdAsync(id);
+                if (schedule == null)
+                {
+                    return NotFound("Schedule not found");
+                }
+
+                // Create the exam
+                var exam = new Exams
+                {
+                    ExamName = examDto.ExamName,
+                    ExamDate = examDto.ExamDate,
+                    StartTime = examDto.StartTime,
+                    EndTime = examDto.EndTime,
+                    CId = schedule.CId,
+                    PId = schedule.PId,
+                    RId = schedule.RId,
+                    SCId = schedule.SCId
+                };
+
+                // Create the exam
+                var createdExam = await _examService.CreateExamAsync(exam);
+
+                // Update the schedule with the exam ID
+                schedule.EId = createdExam.EId;
+                schedule.Exam = createdExam;
+                await _scheduleService.UpdateScheduleAsync(schedule);
+
+                return Ok(schedule);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
     }

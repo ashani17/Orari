@@ -23,12 +23,45 @@ namespace Orari.Services
 
         public async Task<Schedules> CreateScheduleAsync(Schedules schedule)
         {
+            // Check for existing schedule
             var existingSchedule = await _scheduleRepository.GetScheduleByDateAndTimeAsync(
                 schedule.Date, schedule.StartTime, schedule.EndTime);
             if (existingSchedule != null)
             {
                 throw new Exception("Schedule already exists");
             }
+
+            // Validate Room
+            var room = await _roomRepository.GetRoomByIdAsync(schedule.RId);
+            if (room == null)
+            {
+                throw new Exception("Room not found");
+            }
+
+            // Validate Professor
+            var professor = await _profesorRepository.GetProfesorByEmailAsync(schedule.PId);
+            if (professor == null)
+            {
+                throw new Exception("Professor not found");
+            }
+
+            // Validate Course
+            var course = await _courseRepository.GetCourseByIdAsync(schedule.CId);
+            if (course == null)
+            {
+                throw new Exception("Course not found");
+            }
+
+            // Only validate exam if one is specified
+            if (schedule.EId.HasValue)
+            {
+                var exam = await _examRepository.GetExamByIdAsync(schedule.EId.Value);
+                if (exam == null)
+                {
+                    throw new Exception("Exam not found");
+                }
+            }
+
             return await _scheduleRepository.CreateScheduleAsync(schedule);
         }
 

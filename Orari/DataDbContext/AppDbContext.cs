@@ -22,11 +22,30 @@ namespace Orari.DataDbContext
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Configure one-to-one relationship between Exams and Schedules
+            // Configure optional one-to-one relationship between Exams and Schedules
             modelBuilder.Entity<Exams>()
                 .HasOne(e => e.Schedule)
                 .WithOne(s => s.Exam)
-                .HasForeignKey<Schedules>(s => s.EId);
+                .HasForeignKey<Schedules>(s => s.EId)
+                .IsRequired(false);  // Make the relationship optional
+
+            // Configure Exam-Course relationship using CId
+            modelBuilder.Entity<Exams>()
+                .HasOne(e => e.Course)
+                .WithMany()
+                .HasForeignKey(e => e.CId);
+
+            // Configure Exam-Professor relationship using PId
+            modelBuilder.Entity<Exams>()
+                .HasOne(e => e.Profesor)
+                .WithMany()
+                .HasForeignKey(e => e.PId);
+
+            // Configure Exam-Room relationship using RId
+            modelBuilder.Entity<Exams>()
+                .HasOne(e => e.Room)
+                .WithMany()
+                .HasForeignKey(e => e.RId);
 
             base.OnModelCreating(modelBuilder);
 

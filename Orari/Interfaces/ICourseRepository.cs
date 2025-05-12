@@ -9,6 +9,8 @@ namespace Orari.Interfaces
         Task<Courses> CreateCourseAsync(Courses course);
         Task<Courses> UpdateCourseAsync(Courses course);
         Task<bool> DeleteCourseAsync(int id);
-        Task<Courses?> GetCourseByNameAsync(string CName); // Added missing method definition  
+        Task<Courses?> GetCourseByNameAsync(string CName);
+        Task AddCourseToStudyProgramAsync(StudyProgramCourse studyProgramCourse);
+        Task<IEnumerable<Courses>> GetCoursesByStudyProgramAsync(int studyProgramId);
     }
 }

@@ -55,5 +55,23 @@ namespace Orari.Services
             }
             return await _enrollmentRepository.UnenrollStudentAsync(studentId, courseId);
         }
+
+        public async Task<IEnumerable<Courses>> GetStudentCoursesByEmailAsync(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                throw new ArgumentException("Email cannot be empty");
+            }
+            return await _enrollmentRepository.GetStudentCoursesByEmailAsync(email);
+        }
+
+        public async Task<IEnumerable<Students>> GetCourseStudentsByNameAsync(string courseName)
+        {
+            if (string.IsNullOrEmpty(courseName))
+            {
+                throw new ArgumentException("Course name cannot be empty");
+            }
+            return await _enrollmentRepository.GetCourseStudentsByNameAsync(courseName);
+        }
     }
 }

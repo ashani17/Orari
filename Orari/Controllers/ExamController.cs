@@ -53,8 +53,11 @@ namespace Orari.Controllers
                 EndTime = exam.EndTime,
                 SCId = exam.ScheduleId,
                 PId = exam.ProfesorId,
+                ProfesorPId = exam.ProfesorId,
                 CId = exam.CourseId,
+                CourseCId = exam.CourseId,
                 RId = exam.RoomId,
+                RoomRId = exam.RoomId
             };
 
             // Pass the mapped Exams model to the service
