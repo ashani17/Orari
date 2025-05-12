@@ -6,7 +6,9 @@ using Orari.ViewModels;
 
 namespace Orari.Controllers
 {
-    public class AuthenticationController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AuthenticationController : ControllerBase
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
@@ -19,13 +21,13 @@ namespace Orari.Controllers
             _jwtTokenGenerator = jwtTokenGenerator;
         }
 
-        [HttpGet]
-        public IActionResult Login()
+        [HttpGet("login")]
+        public IActionResult LoginPage()
         {
             return Ok();
         }
 
-        [HttpPost]
+        [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO loginRequestDTO)
         {
             if (ModelState.IsValid)
@@ -46,14 +48,14 @@ namespace Orari.Controllers
             return BadRequest("Invalid login request.");
         }
 
-        [HttpGet]
-        public IActionResult Register()
+        [HttpGet("register")]
+        public IActionResult RegisterPage()
         {
             return Ok();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Register(RegisterViewModel model)
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
         {
             if (ModelState.IsValid)
             {
@@ -72,7 +74,7 @@ namespace Orari.Controllers
             return Ok(model);
         }
 
-        [HttpPost]
+        [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
