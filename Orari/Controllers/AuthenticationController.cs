@@ -19,13 +19,15 @@ namespace Orari.Controllers
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly JwtTokenGenerator _jwtTokenGenerator;
         private readonly IProfesorService _profesorService;
+        private readonly IStudentService _studentService;
 
-        public AuthenticationController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, JwtTokenGenerator jwtTokenGenerator, IProfesorService profesorService)
+        public AuthenticationController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, JwtTokenGenerator jwtTokenGenerator, IProfesorService profesorService, IStudentService studentService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _jwtTokenGenerator = jwtTokenGenerator;
             _profesorService = profesorService;
+            _studentService = studentService;
         }
 
         [HttpGet("login")]
@@ -75,11 +77,35 @@ namespace Orari.Controllers
             
             if (result.Succeeded)
             {
-                // Use the constant instead of string
                 await _userManager.AddToRoleAsync(user, UserRoles.Student);
 
-                var token = await _jwtTokenGenerator.GenerateToken(user.Id, user.Email!);
-                return Ok(new { Token = token });
+                // Create student record in Students table
+                var student = new Students
+                {
+                    SName = model.Name,
+                    SSurname = model.Surname,
+                    SEmail = model.Email,
+                    SPassword = model.Password, // Consider if you really need to store this
+                    SCreatedAt = DateTime.UtcNow,
+                    SUpdatedAt = DateTime.UtcNow
+                };
+
+                try 
+                {
+                    await _studentService.CreateStudentAsync(student);
+                }
+                catch (Exception ex)
+                {
+                    // If student creation fails, remove the Identity user
+                    await _userManager.DeleteAsync(user);
+                    return BadRequest($"Failed to create student record: {ex.Message}");
+                }
+
+                return Ok(new RegisterResponseDTO
+                {
+                    Message = "Registration successful. Please login to continue.",
+                    UserType = UserRoles.Student
+                });
             }
 
             foreach (var error in result.Errors)

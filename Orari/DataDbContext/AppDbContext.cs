@@ -20,7 +20,8 @@ namespace Orari.DataDbContext
         public DbSet<Departments> Departments { get; set; }
         public DbSet<StudyPrograms> StudyPrograms { get; set; }
         public DbSet<StudyProgramCourse> StudyProgramCourses { get; set; }
-
+        public DbSet<Chats>Chats { get; set; }
+        public DbSet<Messages>Messages { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder); // This is important for Identity tables

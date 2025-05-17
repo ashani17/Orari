@@ -2,6 +2,7 @@
 using Orari.DataDbContext;
 using Orari.Interfaces;
 using Orari.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Orari.Repository
 {
@@ -64,6 +65,13 @@ namespace Orari.Repository
             existingProfesor.PSubject = profesor.PSubject;
             _context.SaveChanges();
             return Task.FromResult(existingProfesor);
+        }
+
+        public async Task<IEnumerable<Profesors>> GetProfesorsByEmailsAsync(IEnumerable<string> emails)
+        {
+            return await _context.Profesors
+                .Where(p => emails.Contains(p.PEmail))
+                .ToListAsync();
         }
     }
 }

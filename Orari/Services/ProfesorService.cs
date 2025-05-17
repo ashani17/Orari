@@ -1,14 +1,18 @@
 ﻿using Orari.Interfaces;
 using Orari.Models;
+using Microsoft.AspNetCore.Identity;
+using Orari.Constants;
 
 namespace Orari.Services
 {
     public class ProfesorService : IProfesorService
     {
         private readonly IProfesorRepository _profesorRepository;
-        public ProfesorService(IProfesorRepository profesorRepository)
+        private readonly UserManager<IdentityUser> _userManager;
+        public ProfesorService(IProfesorRepository profesorRepository, UserManager<IdentityUser> userManager)
         {
             _profesorRepository = profesorRepository;
+            _userManager = userManager;
         }
         public async Task<Profesors> CreateProfesorAsync(Profesors profesor)
         {
@@ -58,6 +62,16 @@ namespace Orari.Services
         public async Task<Profesors> UpdateProfesorAsync(Profesors profesor)
         {
             return await _profesorRepository.UpdateProfesorAsync(profesor);
+        }
+
+        public async Task<IEnumerable<Profesors>> GetAllAdminsAsync()
+        {
+            var adminUsers = await _userManager.GetUsersInRoleAsync(UserRoles.Admin);
+            var adminEmails = adminUsers.Select(u => u.Email).Where(e => e != null).ToList();
+            
+            // Get the professor records for these admin users
+            var adminProfessors = await _profesorRepository.GetProfesorsByEmailsAsync(adminEmails);
+            return adminProfessors;
         }
     }
 }

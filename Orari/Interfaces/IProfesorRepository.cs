@@ -10,5 +10,6 @@ namespace Orari.Interfaces
         Task<Profesors> CreateProfesorAsync(Profesors profesor);
         Task<Profesors> UpdateProfesorAsync(Profesors profesor);
         Task<bool> DeleteProfesorAsync(int id);
+        Task<IEnumerable<Profesors>> GetProfesorsByEmailsAsync(IEnumerable<string> emails);
     }
 }
