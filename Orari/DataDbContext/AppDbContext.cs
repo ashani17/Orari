@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Orari.Models;
 
 namespace Orari.DataDbContext
 {
-    public class AppDbContext : Microsoft.EntityFrameworkCore.DbContext
+    public class AppDbContext : IdentityDbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
@@ -22,6 +23,8 @@ namespace Orari.DataDbContext
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder); // This is important for Identity tables
+
             // Configure optional one-to-one relationship between Exams and Schedules
             modelBuilder.Entity<Exams>()
                 .HasOne(e => e.Schedule)
@@ -67,7 +70,5 @@ namespace Orari.DataDbContext
                 .WithMany(d => d.StudyPrograms)
                 .HasForeignKey(sp => sp.DId);
         }
-
-
     }
 }

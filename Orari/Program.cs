@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Orari.Services;
 using System.Collections.Generic;
+using Orari.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,8 +26,8 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => {
     options.Password.RequireNonAlphanumeric = true;
     options.Password.RequiredLength = 8;
 })
-.AddEntityFrameworkStores<AppDbContext>()
-.AddDefaultTokenProviders();
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -52,6 +53,8 @@ builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IStudyProgramService, StudyProgramService>();
 
+// Add this after your existing service registrations
+builder.Services.AddScoped<RoleSeederService>();
 
 // Add Swagger services
 builder.Services.AddEndpointsApiExplorer();
@@ -113,6 +116,15 @@ builder.Services.AddAuthentication(options =>
 });
 builder.Services.AddScoped<JwtTokenGenerator>();
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("SuperAdminOnly", policy =>
+        policy.RequireRole(UserRoles.SuperAdmin));
+    
+    options.AddPolicy("AdminOrSuperAdmin", policy =>
+        policy.RequireRole(UserRoles.Admin, UserRoles.SuperAdmin));
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -132,5 +144,14 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// Add this after building the application but before app.Run()
+using (var scope = app.Services.CreateScope())
+{
+    var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeederService>();
+    await roleSeeder.SeedRolesAsync();
+    await roleSeeder.SeedAdminUserAsync();
+    await roleSeeder.SeedSuperAdminAsync();
+}
 
 app.Run();

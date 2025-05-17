@@ -1,6 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Orari.Constants;
 using Orari.DTO.AuthenticationDTO;
+using Orari.Interfaces;
+using Orari.Models;
 using Orari.Services;
 using Orari.ViewModels;
 
@@ -13,12 +18,14 @@ namespace Orari.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly JwtTokenGenerator _jwtTokenGenerator;
+        private readonly IProfesorService _profesorService;
 
-        public AuthenticationController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager,JwtTokenGenerator jwtTokenGenerator)
+        public AuthenticationController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, JwtTokenGenerator jwtTokenGenerator, IProfesorService profesorService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _jwtTokenGenerator = jwtTokenGenerator;
+            _profesorService = profesorService;
         }
 
         [HttpGet("login")]
@@ -40,7 +47,7 @@ namespace Orari.Controllers
                 if (!isValid)
                     return Unauthorized("Invalid email or password.");
 
-                var token = _jwtTokenGenerator.GenerateToken(user.Id, user.Email!);
+                var token = await _jwtTokenGenerator.GenerateToken(user.Id, user.Email!);
                 return Ok(new { Token = token });
             }
 
@@ -54,31 +61,95 @@ namespace Orari.Controllers
             return Ok();
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
+        [HttpPost("register/student")]
+        public async Task<IActionResult> RegisterStudent([FromBody] StudentRegisterDTO model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!model.Email.EndsWith("@fshn.edu.al"))
+                return BadRequest("Only @fshn.edu.al email addresses are allowed.");
+
+            var user = new IdentityUser { UserName = model.Email, Email = model.Email };
+            var result = await _userManager.CreateAsync(user, model.Password);
+            
+            if (result.Succeeded)
             {
-                var user = new IdentityUser { UserName = model.Email, Email = model.Email };
-                var result = await _userManager.CreateAsync(user, model.Password);
-                if (result.Succeeded)
-                {
-                    await _signInManager.SignInAsync(user, isPersistent: false);
-                    return RedirectToAction("Index", "Home");
-                }
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
+                // Use the constant instead of string
+                await _userManager.AddToRoleAsync(user, UserRoles.Student);
+
+                var token = await _jwtTokenGenerator.GenerateToken(user.Id, user.Email!);
+                return Ok(new { Token = token });
             }
-            return Ok(model);
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+            return BadRequest(ModelState);
+        }
+
+        [HttpPost("register/staff")]
+        [Authorize(Roles = $"{UserRoles.Admin},{UserRoles.SuperAdmin}")]
+        public async Task<IActionResult> RegisterStaff([FromBody] AdminProfesorRegisterDTO model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!model.Email.EndsWith("@fshn.edu.al"))
+                return BadRequest("Only @fshn.edu.al email addresses are allowed.");
+
+            // Allow SuperAdmin to create any type of user
+            if (User.IsInRole(UserRoles.SuperAdmin))
+            {
+                // SuperAdmin can create any type of user
+            }
+            else if (User.IsInRole(UserRoles.Admin))
+            {
+                // Regular admin restrictions
+                if (model.UserType == UserRoles.SuperAdmin)
+                    return BadRequest("Regular admins cannot create SuperAdmin accounts");
+            }
+
+            var user = new IdentityUser { UserName = model.Email, Email = model.Email };
+            var result = await _userManager.CreateAsync(user, model.Password);
+            
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(user, model.UserType);
+
+                if (model.UserType == UserRoles.Professor)
+                {
+                    // Create professor profile with all required fields
+                    var professor = new Profesors
+                    {
+                        PName = model.Name,
+                        PSurname = model.Surname,
+                        PEmail = model.Email,
+                        PPassword = model.Password, // Set the password
+                        PSubject = model.Subject ?? "Not Set", // Provide default if not set
+                        PCreatedAt = DateTime.UtcNow,
+                        PUpdatedAt = DateTime.UtcNow,
+                        Availability = model.Availability ?? true, // Default to true if not set
+                    };
+                    await _profesorService.CreateProfesorAsync(professor);
+                }
+
+                return Ok(new { Message = $"{model.UserType} account created successfully" });
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+            return BadRequest(ModelState);
         }
 
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
-            return RedirectToAction("Index", "Home");
+            return Ok(new { Message = "Logged out successfully" });
         }
     }
 }
