@@ -9,13 +9,13 @@ namespace Orari.DTO.EnrollmentDTO
 
 
         }
-        public EnrollmentDTO(int sId, int cId)
+        public EnrollmentDTO(string studentId, int cId)
         {
-            SId = sId;
+            StudentId = studentId;
             CId = cId;
         }
         [Required]
-        public int SId { get; set; }
+        public string StudentId { get; set; }
         [Required]
         public int CId { get; set; }
 

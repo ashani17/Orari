@@ -1,5 +1,8 @@
 ﻿using Orari.Interfaces;
 using Orari.Models;
+using Orari.Repository;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Orari.Services
 {
@@ -11,14 +14,9 @@ namespace Orari.Services
             _enrollmentRepository = enrollmentRepository;
         }
 
-        public async Task<bool> EnrollStudentAsync(int studentId, int courseId)
+        public Task<bool> EnrollStudentAsync(string studentId, int courseId)
         {
-            var existingEnrollments = await _enrollmentRepository.GetStudentCoursesAsync(studentId);
-            if (existingEnrollments.Any(course => course.CId == courseId))
-            {
-                throw new Exception("Student is already enrolled in this course");
-            }
-            return await _enrollmentRepository.EnrollStudentAsync(studentId, courseId);
+            return _enrollmentRepository.EnrollStudentAsync(studentId, courseId);
         }
 
         public Task<string?> GetAllEnrollmentsAsync()
@@ -36,24 +34,14 @@ namespace Orari.Services
             return await _enrollmentRepository.GetCourseStudentsAsync(courseId);
         }
 
-        public Task<IEnumerable<Courses>> GetStudentCoursesAsync(int studentId)
+        public Task<IEnumerable<Courses>> GetStudentCoursesAsync(string studentId)
         {
-            var courses = _enrollmentRepository.GetStudentCoursesAsync(studentId);
-            if (courses == null)
-            {
-                throw new Exception("No courses found for this student");
-            }
             return _enrollmentRepository.GetStudentCoursesAsync(studentId);
         }
 
-        public async Task<bool> UnenrollStudentAsync(int studentId, int courseId)
+        public Task<bool> UnenrollStudentAsync(string studentId, int courseId)
         {
-            var existingEnrollments = await _enrollmentRepository.GetStudentCoursesAsync(studentId);
-            if (!existingEnrollments.Any(course => course.CId == courseId))
-            {
-                throw new Exception("Student is not enrolled in this course");
-            }
-            return await _enrollmentRepository.UnenrollStudentAsync(studentId, courseId);
+            return _enrollmentRepository.UnenrollStudentAsync(studentId, courseId);
         }
 
         public async Task<IEnumerable<Courses>> GetStudentCoursesByEmailAsync(string email)
@@ -72,6 +60,11 @@ namespace Orari.Services
                 throw new ArgumentException("Course name cannot be empty");
             }
             return await _enrollmentRepository.GetCourseStudentsByNameAsync(courseName);
+        }
+
+        public IEnumerable<Enrollments> GetEnrollmentsByStudentId(string studentId)
+        {
+            return _enrollmentRepository.GetEnrollmentsByStudentId(studentId);
         }
     }
 }

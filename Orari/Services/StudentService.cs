@@ -15,14 +15,9 @@ namespace Orari.Services
         {
             return await _studentRepository.GetAllStudents();
         }
-        public async Task<Students> GetStudentByIdAsync(int id)
+        public Task<Students> GetStudentByIdAsync(string id)
         {
-            var student = await _studentRepository.GetStudentByIdAsync(id);
-            if (student == null)
-            {
-                throw new Exception("Student not found");
-            }
-            return await _studentRepository.GetStudentByIdAsync(id);
+            return _studentRepository.GetStudentByIdAsync(id);
         }
         public async Task<Students> CreateStudentAsync(Students student)
         {
@@ -37,13 +32,10 @@ namespace Orari.Services
         {
             return await _studentRepository.UpdateStudentAsync(student);
         }
-        public async Task<bool> DeleteStudentAsync(int id)
+        public async Task<bool> DeleteStudentAsync(string id)
         {
             var existingStudent = await _studentRepository.GetStudentByIdAsync(id);
-            if (existingStudent == null)
-            {
-                throw new Exception("Student not found");
-            }
+            if (existingStudent == null) return false;
             return await _studentRepository.DeleteStudentAsync(id);
         }
 

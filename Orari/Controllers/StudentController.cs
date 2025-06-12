@@ -7,7 +7,9 @@ using Orari.Services;
 
 namespace Orari.Controllers
 {
-    [Route("api/[controller]")]
+    [ApiController]
+    [Route("api/students")]
+    [Produces("application/json")]
     public class StudentController : Controller
     {
         private readonly IStudentService _studentService;
@@ -20,6 +22,7 @@ namespace Orari.Controllers
         }
 
         [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<Students>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll()
         {
             var students = await _studentService.GetAllStudents();
@@ -27,9 +30,11 @@ namespace Orari.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById([FromBody] GetDelStudentDTO dto)
+        [ProducesResponseType(typeof(Students), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetById([FromRoute] string id)
         {
-            var student = await _studentService.GetStudentByIdAsync(dto.SId);
+            var student = await _studentService.GetStudentByIdAsync(id);
             if (student == null)
             {
                 return NotFound();
@@ -38,6 +43,8 @@ namespace Orari.Controllers
         }
 
         [HttpPost]
+        [ProducesResponseType(typeof(Students), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] PostStudentDTO student)
         {
             if (student == null)
@@ -56,11 +63,13 @@ namespace Orari.Controllers
             };
 
             var createdStudent = await _studentService.CreateStudentAsync(studentModel);
-            return CreatedAtAction(nameof(GetById), new { id = createdStudent.SId }, createdStudent);
+            return CreatedAtAction(nameof(GetById), new { id = createdStudent.Id }, createdStudent);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] PutStudentDTO student)
+        [ProducesResponseType(typeof(Students), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Update([FromRoute] string id, [FromBody] PutStudentDTO student)
         {
             if (student == null)
             {
@@ -81,14 +90,16 @@ namespace Orari.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete([FromBody] GetDelStudentDTO dto)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Delete([FromRoute] string id)
         {
-            var student = await _studentService.GetStudentByIdAsync(dto.SId);
+            var student = await _studentService.GetStudentByIdAsync(id);
             if (student == null)
             {
                 return NotFound();
             }
-            await _studentService.DeleteStudentAsync(dto.SId);
+            await _studentService.DeleteStudentAsync(id);
             return NoContent();
         }
     }

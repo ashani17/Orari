@@ -7,7 +7,9 @@ using Orari.Services;
 
 namespace Orari.Controllers
 {
-    [Route("api/[controller]")]
+    [ApiController]
+    [Route("api/courses")]
+    [Produces("application/json")]
     public class CourseController : Controller
     {
         private readonly ICourseService _courseService;
@@ -18,6 +20,7 @@ namespace Orari.Controllers
         }
 
         [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<Courses>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll()
         {
             var courses = await _courseService.GetAllCourses();
@@ -25,9 +28,11 @@ namespace Orari.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById([FromBody] GetDelCourseDTO dto)
+        [ProducesResponseType(typeof(Courses), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetById([FromRoute] int id)
         {
-            var course = await _courseService.GetCourseByIdAsync(dto.CId);
+            var course = await _courseService.GetCourseByIdAsync(id);
             if (course == null)
             {
                 return NotFound();
@@ -36,6 +41,8 @@ namespace Orari.Controllers
         }
 
         [HttpPost]
+        [ProducesResponseType(typeof(Courses), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] PostCourseDTO course)
         {
             if (course == null)
@@ -63,7 +70,10 @@ namespace Orari.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] PutCourseDTO course)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Update([FromRoute] int id, [FromBody] PutCourseDTO course)
         {
             if (course == null)
             {
@@ -75,33 +85,32 @@ namespace Orari.Controllers
                 return NotFound();
             }
 
-            // Update the properties of the existing course
             existingCourse.CName = course.CName;
             existingCourse.Credits = course.Credits;
-
-            // Fix: Assign the 'PName' property of 'Profesors' to the 'Profesor' string field
             existingCourse.PId = course.Profesor.PId;
 
-            // Pass both the id and the updated course object to the UpdateCourseAsync method
             await _courseService.UpdateCourseAsync(id, existingCourse);
-
             return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete([FromBody] GetDelCourseDTO dto)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Delete([FromRoute] int id)
         {
-            var course = await _courseService.GetCourseByIdAsync(dto.CId);
+            var course = await _courseService.GetCourseByIdAsync(id);
             if (course == null)
             {
                 return NotFound();
             }
-            await _courseService.DeleteCourseAsync(dto.CId);
+            await _courseService.DeleteCourseAsync(id);
             return NoContent();
         }
 
         [HttpGet("studyprogram/{studyProgramId}")]
-        public async Task<IActionResult> GetCoursesByStudyProgram(int studyProgramId)
+        [ProducesResponseType(typeof(IEnumerable<Courses>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetCoursesByStudyProgram([FromRoute] int studyProgramId)
         {
             try
             {

@@ -1,11 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
 
 namespace Orari.Models
 {
-    public class Students
+    public class Students : IdentityUser
     {
-        [Key]
-        public int SId { get; set; }
         public required string SName { get; set; }
         public required string SSurname { get; set; }
         public required string SPassword { get; set; }

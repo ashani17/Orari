@@ -2,11 +2,13 @@
 using Orari.DataDbContext;
 using Orari.DTO.EnrollmentDTO;
 using Orari.Interfaces;
+using Orari.Models;
 
 namespace Orari.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/enrollments")]
+    [Produces("application/json")]
     public class EnrollmentController : Controller
     {
         
@@ -19,6 +21,7 @@ namespace Orari.Controllers
         }
 
         [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<Enrollments>), StatusCodes.Status200OK)]
         public async Task<IActionResult> Index()
         {
             var enrollments = await _enrollmentService.GetAllEnrollmentsAsync();
@@ -26,9 +29,11 @@ namespace Orari.Controllers
         }
 
         [HttpPost("enroll")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> EnrollStudent([FromBody] EnrollmentDTO dto)
         {
-            var result = await _enrollmentService.EnrollStudentAsync(dto.SId, dto.CId);
+            var result = await _enrollmentService.EnrollStudentAsync(dto.StudentId, dto.CId);
             if (result)
             {
                 return Ok("Student enrolled successfully.");
@@ -37,9 +42,11 @@ namespace Orari.Controllers
         }
 
         [HttpPost("unenroll")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UnenrollStudent([FromBody] EnrollmentDTO dto)
         {
-            var result = await _enrollmentService.UnenrollStudentAsync(dto.SId, dto.CId);
+            var result = await _enrollmentService.UnenrollStudentAsync(dto.StudentId, dto.CId);
             if (result)
             {
                 return Ok("Student unenrolled successfully.");
@@ -48,21 +55,25 @@ namespace Orari.Controllers
         }
 
         [HttpGet("student/{studentId}/courses")]
-        public async Task<IActionResult> GetStudentCourses(int studentId)
+        [ProducesResponseType(typeof(IEnumerable<Courses>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetStudentCourses([FromRoute] string studentId)
         {
             var courses = await _enrollmentService.GetStudentCoursesAsync(studentId);
             return Ok(courses);
         }
 
         [HttpGet("course/{courseId}/students")]
-        public async Task<IActionResult> GetCourseStudents(int courseId)
+        [ProducesResponseType(typeof(IEnumerable<Students>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetCourseStudents([FromRoute] int courseId)
         {
             var students = await _enrollmentService.GetCourseStudentsAsync(courseId);
             return Ok(students);
         }
 
         [HttpGet("student/email/{email}/courses")]
-        public async Task<IActionResult> GetStudentCoursesByEmail(string email)
+        [ProducesResponseType(typeof(IEnumerable<Courses>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetStudentCoursesByEmail([FromRoute] string email)
         {
             try
             {
@@ -76,7 +87,9 @@ namespace Orari.Controllers
         }
 
         [HttpGet("course/name/{courseName}/students")]
-        public async Task<IActionResult> GetCourseStudentsByName(string courseName)
+        [ProducesResponseType(typeof(IEnumerable<Students>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetCourseStudentsByName([FromRoute] string courseName)
         {
             try
             {

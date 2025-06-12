@@ -6,7 +6,9 @@ using Orari.Models;
 
 namespace Orari.Controllers
 {
-    [Route("api/[controller]")]
+    [ApiController]
+    [Route("api/professors")]
+    [Produces("application/json")]
     public class ProfesorController : Controller
     {
         private readonly IProfesorService _profesorService;
@@ -19,6 +21,7 @@ namespace Orari.Controllers
         }
 
         [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<Profesors>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll()
         {
             var profesors = await _profesorService.GetAllProfesors();
@@ -26,9 +29,11 @@ namespace Orari.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById([FromBody] GetDelProfesorDTO dto)
+        [ProducesResponseType(typeof(Profesors), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetById([FromRoute] int id)
         {
-            var profesor = await _profesorService.GetProfesorByIdAsync(dto.PId);
+            var profesor = await _profesorService.GetProfesorByIdAsync(id);
             if (profesor == null)
             {
                 return NotFound();
@@ -37,6 +42,8 @@ namespace Orari.Controllers
         }
 
         [HttpPost]
+        [ProducesResponseType(typeof(Profesors), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] PostProfesorDTO profesor)
         {
             if (profesor == null)
@@ -61,7 +68,10 @@ namespace Orari.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] PutProfesorDTO profesor)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Update([FromRoute] int id, [FromBody] PutProfesorDTO profesor)
         {
             if (profesor == null)
             {
@@ -83,14 +93,16 @@ namespace Orari.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete([FromBody] GetDelProfesorDTO dto)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Delete([FromRoute] int id)
         {
-            var profesor = await _profesorService.GetProfesorByIdAsync(dto.PId);
+            var profesor = await _profesorService.GetProfesorByIdAsync(id);
             if (profesor == null)
             {
                 return NotFound();
             }
-            await _profesorService.DeleteProfesorAsync(dto.PId);
+            await _profesorService.DeleteProfesorAsync(id);
             return NoContent();
         }
     }

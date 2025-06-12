@@ -2,6 +2,6 @@
 {
     public class GetDelStudentDTO
     {
-        public int SId { get; set; }
+        public string StudentId { get; set; }
     }
 }

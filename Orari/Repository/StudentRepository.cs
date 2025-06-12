@@ -18,7 +18,7 @@ namespace Orari.Repository
             return Task.FromResult(student);
         }
 
-        public Task<bool> DeleteStudentAsync(int id)
+        public Task<bool> DeleteStudentAsync(string id)
         {
             var student = _context.Students.Find(id);
             if (student == null) return Task.FromResult(false);
@@ -37,9 +37,9 @@ namespace Orari.Repository
             return Task.FromResult<IEnumerable<Students>>(students);
         }
 
-        public Task<Students> GetStudentByIdAsync(int id)
+        public Task<Students> GetStudentByIdAsync(string id)
         {
-            var student = _context.Students.FirstOrDefault(s => s.SId == id);
+            var student = _context.Students.FirstOrDefault(s => s.Id == id);
             if (student == null) throw new Exception("Student not found");
             return Task.FromResult(student);
         }
@@ -53,11 +53,14 @@ namespace Orari.Repository
 
         public Task<Students> UpdateStudentAsync(Students student)
         {
-            var existingStudent = _context.Students.Find(student.SId);
+            var existingStudent = _context.Students.Find(student.Id);
             if (existingStudent == null) throw new Exception("Student not found");
             existingStudent.SName = student.SName;
             existingStudent.SSurname = student.SSurname;
+            existingStudent.SPassword = student.SPassword;
             existingStudent.SEmail = student.SEmail;
+            existingStudent.SCreatedAt = student.SCreatedAt;
+            existingStudent.SUpdatedAt = student.SUpdatedAt;
             _context.SaveChanges();
             return Task.FromResult(existingStudent);
         }

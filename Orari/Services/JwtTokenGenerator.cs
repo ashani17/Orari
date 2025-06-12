@@ -1,45 +1,98 @@
-﻿namespace Orari.Services
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
+
+namespace Orari.Services
 {
-    using Microsoft.Extensions.Configuration;
-    using Microsoft.IdentityModel.Tokens;
-    using System.IdentityModel.Tokens.Jwt;
-    using System.Security.Claims;
-    using System.Text;
-
-    public class JwtTokenGenerator
+    public class JwtTokenGenerator : IJwtTokenGenerator
     {
-        private readonly IConfiguration _configuration;
+        private readonly JwtSettings _jwtSettings;
+        private readonly ILogger<JwtTokenGenerator> _logger;
 
-        public JwtTokenGenerator(IConfiguration configuration)
+        public JwtTokenGenerator(IOptions<JwtSettings> jwtSettings, ILogger<JwtTokenGenerator> logger)
         {
-            _configuration = configuration;
+            _jwtSettings = jwtSettings?.Value ?? throw new ArgumentNullException(nameof(jwtSettings));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            // Log JWT settings (excluding the secret for security)
+            _logger.LogInformation("JwtTokenGenerator initialized with settings: Issuer={Issuer}, Audience={Audience}, ExpiryMinutes={ExpiryMinutes}",
+                _jwtSettings.Issuer,
+                _jwtSettings.Audience,
+                _jwtSettings.ExpiryMinutes);
+
+            if (string.IsNullOrEmpty(_jwtSettings.Secret))
+            {
+                _logger.LogError("JWT Secret is null or empty");
+                throw new ArgumentException("JWT Secret cannot be null or empty", nameof(jwtSettings));
+            }
+
+            if (string.IsNullOrEmpty(_jwtSettings.Issuer))
+            {
+                _logger.LogError("JWT Issuer is null or empty");
+                throw new ArgumentException("JWT Issuer cannot be null or empty", nameof(jwtSettings));
+            }
+
+            if (string.IsNullOrEmpty(_jwtSettings.Audience))
+            {
+                _logger.LogError("JWT Audience is null or empty");
+                throw new ArgumentException("JWT Audience cannot be null or empty", nameof(jwtSettings));
+            }
+
+            if (_jwtSettings.ExpiryMinutes <= 0)
+            {
+                _logger.LogError("JWT ExpiryMinutes must be greater than 0");
+                throw new ArgumentException("JWT ExpiryMinutes must be greater than 0", nameof(jwtSettings));
+            }
         }
 
         public string GenerateToken(string userId, string email)
         {
-            var jwtSettings = _configuration.GetSection("Jwt");
-
-            var claims = new[]
+            try
             {
-            new Claim(JwtRegisteredClaimNames.Sub, userId),
-            new Claim(JwtRegisteredClaimNames.Email, email),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+                _logger.LogInformation("Generating token for user {UserId} with email {Email}", userId, email);
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expires = DateTime.UtcNow.AddMinutes(double.Parse(jwtSettings["ExpiresInMinutes"]!));
+                if (string.IsNullOrEmpty(userId))
+                {
+                    _logger.LogError("UserId is null or empty");
+                    throw new ArgumentNullException(nameof(userId));
+                }
 
-            var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
-                claims: claims,
-                expires: expires,
-                signingCredentials: creds
-            );
+                if (string.IsNullOrEmpty(email))
+                {
+                    _logger.LogError("Email is null or empty");
+                    throw new ArgumentNullException(nameof(email));
+                }
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+                var signingCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret)),
+                    SecurityAlgorithms.HmacSha256);
+
+                var claims = new[]
+                {
+                    new Claim(JwtRegisteredClaimNames.Sub, userId),
+                    new Claim(JwtRegisteredClaimNames.Email, email),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                };
+
+                var securityToken = new JwtSecurityToken(
+                    issuer: _jwtSettings.Issuer,
+                    audience: _jwtSettings.Audience,
+                    expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpiryMinutes),
+                    claims: claims,
+                    signingCredentials: signingCredentials);
+
+                _logger.LogInformation("Token generated successfully for user {UserId}", userId);
+                return new JwtSecurityTokenHandler().WriteToken(securityToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating token for user {UserId}", userId);
+                throw;
+            }
         }
     }
-
 }
