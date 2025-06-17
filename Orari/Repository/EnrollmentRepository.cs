@@ -2,26 +2,35 @@
 using Orari.Interfaces;
 using Orari.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace Orari.Repository
 {
-
     public class EnrollmentRepository : IEnrollmentRepository
     {
         private readonly AppDbContext _context;
-        public EnrollmentRepository(AppDbContext context)
+        private readonly UserManager<User> _userManager;
+
+        public EnrollmentRepository(AppDbContext context, UserManager<User> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
+
         public async Task<bool> EnrollStudentAsync(string studentId, int CId)
         {
-            var student = _context.Students.FirstOrDefault(s => s.Id == studentId);
-            if (student == null) return false;
+            // Check if the user exists and has Student role
+            var user = await _userManager.FindByIdAsync(studentId);
+            if (user == null) return false;
+            
+            var roles = await _userManager.GetRolesAsync(user);
+            if (!roles.Contains("Student")) return false;
+
             var enrollment = new Enrollments
             {
                 StudentId = studentId,
                 CId = CId,
-                Student = student,
+                Student = user,
                 Courses = _context.Courses.First(c => c.CId == CId)
             };
             _context.Enrollments.Add(enrollment);
@@ -40,21 +49,31 @@ namespace Orari.Repository
                 return Task.FromResult<string?>(null);
             }
             // Assuming you want to return a string representation of the enrollments
-            return Task.FromResult(string.Join(", ", enrollments.Select(e => $"{e.Student.SName} enrolled in {e.Courses.CName}")));
+            return Task.FromResult(string.Join(", ", enrollments.Select(e => $"{e.Student.FirstName} {e.Student.LastName} enrolled in {e.Courses.CName}")));
         }
 
-        public Task<IEnumerable<Students>> GetCourseStudentsAsync(int courseId)
+        public async Task<IEnumerable<User>> GetCourseStudentsAsync(int courseId)
         {
-            var students = _context.Enrollments
-                .Include(e => e.Student)
+            var studentIds = _context.Enrollments
                 .Where(e => e.CId == courseId)
-                .Select(e => e.Student)
+                .Select(e => e.StudentId)
                 .ToList();
-            if (!students.Any())
+
+            var students = new List<User>();
+            foreach (var studentId in studentIds)
             {
-                return Task.FromResult<IEnumerable<Students>>(new List<Students>());
+                var user = await _userManager.FindByIdAsync(studentId);
+                if (user != null)
+                {
+                    var roles = await _userManager.GetRolesAsync(user);
+                    if (roles.Contains("Student"))
+                    {
+                        students.Add(user);
+                    }
+                }
             }
-            return Task.FromResult<IEnumerable<Students>>(students);
+
+            return students;
         }
 
         public Task<IEnumerable<Courses>> GetStudentCoursesAsync(string studentId)
@@ -77,36 +96,43 @@ namespace Orari.Repository
             return true;
         }
 
-        public Task<IEnumerable<Courses>> GetStudentCoursesByEmailAsync(string email)
+        public async Task<IEnumerable<Courses>> GetStudentCoursesByEmailAsync(string email)
         {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null) return new List<Courses>();
+
             var courses = _context.Enrollments
-                .Include(e => e.Student)
                 .Include(e => e.Courses)
-                .Where(e => e.Student.SEmail == email)
+                .Where(e => e.StudentId == user.Id)
                 .Select(e => e.Courses)
                 .ToList();
 
-            if (!courses.Any())
-            {
-                return Task.FromResult<IEnumerable<Courses>>(new List<Courses>());
-            }
-            return Task.FromResult<IEnumerable<Courses>>(courses);
+            return courses;
         }
 
-        public Task<IEnumerable<Students>> GetCourseStudentsByNameAsync(string courseName)
+        public async Task<IEnumerable<User>> GetCourseStudentsByNameAsync(string courseName)
         {
-            var students = _context.Enrollments
-                .Include(e => e.Student)
+            var studentIds = _context.Enrollments
                 .Include(e => e.Courses)
                 .Where(e => e.Courses.CName == courseName)
-                .Select(e => e.Student)
+                .Select(e => e.StudentId)
                 .ToList();
 
-            if (!students.Any())
+            var students = new List<User>();
+            foreach (var studentId in studentIds)
             {
-                return Task.FromResult<IEnumerable<Students>>(new List<Students>());
+                var user = await _userManager.FindByIdAsync(studentId);
+                if (user != null)
+                {
+                    var roles = await _userManager.GetRolesAsync(user);
+                    if (roles.Contains("Student"))
+                    {
+                        students.Add(user);
+                    }
+                }
             }
-            return Task.FromResult<IEnumerable<Students>>(students);
+
+            return students;
         }
 
         public IEnumerable<Enrollments> GetEnrollmentsByStudentId(string studentId)

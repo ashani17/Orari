@@ -63,7 +63,7 @@ namespace Orari.Controllers
         }
 
         [HttpGet("course/{courseId}/students")]
-        [ProducesResponseType(typeof(IEnumerable<Students>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<User>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetCourseStudents([FromRoute] int courseId)
         {
             var students = await _enrollmentService.GetCourseStudentsAsync(courseId);
@@ -87,7 +87,7 @@ namespace Orari.Controllers
         }
 
         [HttpGet("course/name/{courseName}/students")]
-        [ProducesResponseType(typeof(IEnumerable<Students>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<User>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetCourseStudentsByName([FromRoute] string courseName)
         {
@@ -96,7 +96,7 @@ namespace Orari.Controllers
                 var students = await _enrollmentService.GetCourseStudentsByNameAsync(courseName);
                 return Ok(students);
             }
-            catch (ArgumentException ex)
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }

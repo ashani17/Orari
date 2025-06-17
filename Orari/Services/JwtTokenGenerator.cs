@@ -51,9 +51,14 @@ namespace Orari.Services
 
         public string GenerateToken(string userId, string email)
         {
+            return GenerateToken(userId, email, new List<string>());
+        }
+
+        public string GenerateToken(string userId, string email, IEnumerable<string> roles)
+        {
             try
             {
-                _logger.LogInformation("Generating token for user {UserId} with email {Email}", userId, email);
+                _logger.LogInformation("Generating token for user {UserId} with email {Email} and roles {Roles}", userId, email, string.Join(", ", roles));
 
                 if (string.IsNullOrEmpty(userId))
                 {
@@ -71,12 +76,18 @@ namespace Orari.Services
                     new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret)),
                     SecurityAlgorithms.HmacSha256);
 
-                var claims = new[]
+                var claims = new List<Claim>
                 {
                     new Claim(JwtRegisteredClaimNames.Sub, userId),
                     new Claim(JwtRegisteredClaimNames.Email, email),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 };
+
+                // Add role claims
+                foreach (var role in roles)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, role));
+                }
 
                 var securityToken = new JwtSecurityToken(
                     issuer: _jwtSettings.Issuer,
@@ -85,7 +96,7 @@ namespace Orari.Services
                     claims: claims,
                     signingCredentials: signingCredentials);
 
-                _logger.LogInformation("Token generated successfully for user {UserId}", userId);
+                _logger.LogInformation("Token generated successfully for user {UserId} with roles {Roles}", userId, string.Join(", ", roles));
                 return new JwtSecurityTokenHandler().WriteToken(securityToken);
             }
             catch (Exception ex)

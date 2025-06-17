@@ -1,61 +1,83 @@
 ﻿using Orari.DataDbContext;
 using Orari.Interfaces;
 using Orari.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Orari.Repository
 {
     public class ExamRepository : IExamRepository
     {
-
         private readonly AppDbContext _context;
+
         public ExamRepository(AppDbContext context)
         {
             _context = context;
         }
-        public Task<Exams> CreateExamAsync(Exams exam)
+
+        public async Task<IEnumerable<Exams>> GetAllExamsAsync()
+        {
+            return await _context.Exams
+                .Include(e => e.Course)
+                .Include(e => e.Schedule)
+                .Include(e => e.Professor)
+                .Include(e => e.Room)
+                .ToListAsync();
+        }
+
+        public async Task<Exams?> GetExamByIdAsync(int id)
+        {
+            return await _context.Exams
+                .Include(e => e.Course)
+                .Include(e => e.Schedule)
+                .Include(e => e.Professor)
+                .Include(e => e.Room)
+                .FirstOrDefaultAsync(e => e.EId == id);
+        }
+
+        public async Task<Exams> CreateExamAsync(Exams exam)
         {
             _context.Exams.Add(exam);
-            _context.SaveChanges();
-            return Task.FromResult(exam);
-
+            await _context.SaveChangesAsync();
+            return exam;
         }
 
-        public Task<bool> DeleteExamAsync(int id)
+        public async Task<Exams> UpdateExamAsync(Exams exam)
         {
-            var exam = _context.Exams.Find(id);
-            if (exam == null) return Task.FromResult(false);
+            _context.Exams.Update(exam);
+            await _context.SaveChangesAsync();
+            return exam;
+        }
+
+        public async Task<bool> DeleteExamAsync(int id)
+        {
+            var exam = await _context.Exams.FindAsync(id);
+            if (exam == null) return false;
+            
             _context.Exams.Remove(exam);
-            _context.SaveChanges();
-            return Task.FromResult(true);
-
+            await _context.SaveChangesAsync();
+            return true;
         }
 
-        public Task<IEnumerable<Exams>> GetAllExams()
+        public async Task<IEnumerable<Exams>> GetExamsByCourseAsync(int courseId)
         {
-            var exams = _context.Exams.ToList();
-            if (!exams.Any())
-            {
-                return Task.FromResult<IEnumerable<Exams>>(new List<Exams>());
-            }
-            return Task.FromResult<IEnumerable<Exams>>(exams);
-
+            return await _context.Exams
+                .Where(e => e.CId == courseId)
+                .Include(e => e.Course)
+                .Include(e => e.Schedule)
+                .Include(e => e.Professor)
+                .Include(e => e.Room)
+                .ToListAsync();
         }
 
-        public Task<Exams> GetExamByIdAsync(int id)
+        public async Task<IEnumerable<Exams>> GetExamsByProfessorAsync(string professorId)
         {
-            var exam = _context.Exams.FirstOrDefault(e => e.EId == id);
-            if (exam == null) throw new Exception("Exam not found");
-            return Task.FromResult(exam);
-
-        }
-
-        public Task<Exams> UpdateExamAsync(Exams exam)
-        {
-            var existingExam = _context.Exams.Find(exam.EId);
-            if (existingExam == null) throw new Exception("Exam not found");
-            existingExam.ExamName = exam.ExamName;
-            _context.SaveChanges();
-            return Task.FromResult(existingExam);
+            return await _context.Exams
+                .Where(e => e.ProfessorId == professorId)
+                .Include(e => e.Course)
+                .Include(e => e.Schedule)
+                .Include(e => e.Professor)
+                .Include(e => e.Room)
+                .ToListAsync();
         }
 
         public Task<Exams> GetExamByNameAsync(string name)

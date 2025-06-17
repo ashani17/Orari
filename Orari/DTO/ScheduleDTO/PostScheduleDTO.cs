@@ -19,18 +19,9 @@ namespace Orari.DTO.ScheduleDTO
         public int RId { get; set; }  // Room ID
 
         [Required]
-        public int PId { get; set; }  // Professor ID
+        public string ProfessorId { get; set; }  // Professor User ID (string)
 
         [Required]
         public int CId { get; set; }  // Course ID
-
-        [Required]
-        public string Room { get; set; }
-
-        [Required]
-        public string Profesor { get; set; }
-
-        [Required]
-        public string Course { get; set; }
     }
 }

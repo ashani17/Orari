@@ -12,8 +12,8 @@ using Orari.DataDbContext;
 namespace Orari.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250610191912_Initial")]
-    partial class Initial
+    [Migration("20250617184713_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -237,94 +237,37 @@ namespace Orari.Migrations
                     b.Property<int>("CId")
                         .HasColumnType("int");
 
-                    b.Property<int>("CourseCId")
-                        .HasColumnType("int");
-
-                    b.Property<TimeOnly>("EndTime")
+                    b.Property<TimeSpan>("EndTime")
                         .HasColumnType("time");
 
-                    b.Property<DateOnly>("ExamDate")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("ExamDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("ExamName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("PId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProfesorPId")
-                        .HasColumnType("int");
+                    b.Property<string>("ProfessorId")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("RId")
                         .HasColumnType("int");
 
-                    b.Property<int>("RoomRId")
+                    b.Property<int?>("SCId")
                         .HasColumnType("int");
 
-                    b.Property<int>("SCId")
-                        .HasColumnType("int");
-
-                    b.Property<TimeOnly>("StartTime")
+                    b.Property<TimeSpan>("StartTime")
                         .HasColumnType("time");
 
                     b.HasKey("EId");
 
                     b.HasIndex("CId");
 
-                    b.HasIndex("PId");
+                    b.HasIndex("ProfessorId");
 
                     b.HasIndex("RId");
 
                     b.ToTable("Exams");
-                });
-
-            modelBuilder.Entity("Orari.Models.Profesors", b =>
-                {
-                    b.Property<int>("PId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PId"));
-
-                    b.Property<bool>("Availability")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("PCreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("PEmail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PPassword")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PPhone")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PSubject")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PSurname")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("PUpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("SpecialRequirements")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("PId");
-
-                    b.ToTable("Profesors");
                 });
 
             modelBuilder.Entity("Orari.Models.Rooms", b =>
@@ -357,18 +300,14 @@ namespace Orari.Migrations
 
             modelBuilder.Entity("Orari.Models.Schedules", b =>
                 {
-                    b.Property<int>("SCId")
+                    b.Property<int>("SId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SCId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SId"));
 
                     b.Property<int>("CId")
                         .HasColumnType("int");
-
-                    b.Property<string>("Course")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateOnly>("Date")
                         .HasColumnType("date");
@@ -379,117 +318,28 @@ namespace Orari.Migrations
                     b.Property<TimeOnly>("EndTime")
                         .HasColumnType("time");
 
-                    b.Property<int>("PId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Profesor")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("ProfessorId")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("RId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Room")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time");
 
-                    b.HasKey("SCId");
+                    b.HasKey("SId");
+
+                    b.HasIndex("CId");
 
                     b.HasIndex("EId")
                         .IsUnique()
                         .HasFilter("[EId] IS NOT NULL");
 
+                    b.HasIndex("ProfessorId");
+
+                    b.HasIndex("RId");
+
                     b.ToTable("Schedules");
-                });
-
-            modelBuilder.Entity("Orari.Models.Students", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("AccessFailedCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("NormalizedEmail")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("NormalizedUserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("SCreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("SEmail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SPassword")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SSurname")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("SUpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("SecurityStamp")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("UserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("EmailIndex");
-
-                    b.HasIndex("NormalizedUserName")
-                        .IsUnique()
-                        .HasDatabaseName("UserNameIndex")
-                        .HasFilter("[NormalizedUserName] IS NOT NULL");
-
-                    b.ToTable("Students", (string)null);
                 });
 
             modelBuilder.Entity("Orari.Models.StudyProgramCourse", b =>
@@ -537,6 +387,95 @@ namespace Orari.Migrations
                     b.ToTable("StudyPrograms");
                 });
 
+            modelBuilder.Entity("Orari.Models.User", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Availability")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("FirstName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SpecialRequirements")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Subject")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex")
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.ToTable("AspNetUsers", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -548,7 +487,7 @@ namespace Orari.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("Orari.Models.Students", null)
+                    b.HasOne("Orari.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -557,7 +496,7 @@ namespace Orari.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("Orari.Models.Students", null)
+                    b.HasOne("Orari.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -572,7 +511,7 @@ namespace Orari.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Orari.Models.Students", null)
+                    b.HasOne("Orari.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -581,7 +520,7 @@ namespace Orari.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("Orari.Models.Students", null)
+                    b.HasOne("Orari.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -596,7 +535,7 @@ namespace Orari.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Orari.Models.Students", "Student")
+                    b.HasOne("Orari.Models.User", "Student")
                         .WithMany()
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -615,11 +554,9 @@ namespace Orari.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Orari.Models.Profesors", "Profesor")
+                    b.HasOne("Orari.Models.User", "Professor")
                         .WithMany()
-                        .HasForeignKey("PId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ProfessorId");
 
                     b.HasOne("Orari.Models.Rooms", "Room")
                         .WithMany()
@@ -629,18 +566,40 @@ namespace Orari.Migrations
 
                     b.Navigation("Course");
 
-                    b.Navigation("Profesor");
+                    b.Navigation("Professor");
 
                     b.Navigation("Room");
                 });
 
             modelBuilder.Entity("Orari.Models.Schedules", b =>
                 {
+                    b.HasOne("Orari.Models.Courses", "Course")
+                        .WithMany()
+                        .HasForeignKey("CId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Orari.Models.Exams", "Exam")
                         .WithOne("Schedule")
                         .HasForeignKey("Orari.Models.Schedules", "EId");
 
+                    b.HasOne("Orari.Models.User", "Professor")
+                        .WithMany()
+                        .HasForeignKey("ProfessorId");
+
+                    b.HasOne("Orari.Models.Rooms", "Room")
+                        .WithMany()
+                        .HasForeignKey("RId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
                     b.Navigation("Exam");
+
+                    b.Navigation("Professor");
+
+                    b.Navigation("Room");
                 });
 
             modelBuilder.Entity("Orari.Models.StudyProgramCourse", b =>
@@ -687,8 +646,7 @@ namespace Orari.Migrations
 
             modelBuilder.Entity("Orari.Models.Exams", b =>
                 {
-                    b.Navigation("Schedule")
-                        .IsRequired();
+                    b.Navigation("Schedule");
                 });
 
             modelBuilder.Entity("Orari.Models.StudyPrograms", b =>

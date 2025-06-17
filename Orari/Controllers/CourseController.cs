@@ -21,16 +21,16 @@ namespace Orari.Controllers
 
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<Courses>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAllCourses()
         {
-            var courses = await _courseService.GetAllCourses();
+            var courses = await _courseService.GetAllCoursesAsync();
             return Ok(courses);
         }
 
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(Courses), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetById([FromRoute] int id)
+        public async Task<IActionResult> GetCourseById([FromRoute] int id)
         {
             var course = await _courseService.GetCourseByIdAsync(id);
             if (course == null)
@@ -43,25 +43,12 @@ namespace Orari.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(Courses), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> Create([FromBody] PostCourseDTO course)
+        public async Task<IActionResult> CreateCourse([FromBody] Courses course)
         {
-            if (course == null)
-            {
-                return BadRequest();
-            }
-
-            var courseModel = new Courses
-            {
-                CName = course.CName,
-                Credits = course.Credits,
-                PId = course.Profesor.PId,
-                Profesor = course.Profesor.PEmail
-            };
-
             try
             {
-                var createdCourse = await _courseService.CreateCourseAsync(courseModel, course.StudyProgramId);
-                return CreatedAtAction(nameof(GetById), new { id = createdCourse.CId }, createdCourse);
+                var createdCourse = await _courseService.CreateCourseAsync(course);
+                return CreatedAtAction(nameof(GetCourseById), new { id = createdCourse.CId }, createdCourse);
             }
             catch (Exception ex)
             {
@@ -70,27 +57,30 @@ namespace Orari.Controllers
         }
 
         [HttpPut("{id}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(Courses), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Update([FromRoute] int id, [FromBody] PutCourseDTO course)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UpdateCourse(int id, [FromBody] PutCourseDTO putCourseDTO)
         {
-            if (course == null)
+            try
             {
-                return BadRequest();
+                var existingCourse = await _courseService.GetCourseByIdAsync(id);
+                if (existingCourse == null)
+                {
+                    return NotFound("Course not found");
+                }
+
+                existingCourse.CName = putCourseDTO.CName;
+                existingCourse.Credits = putCourseDTO.Credits;
+                existingCourse.Profesor = putCourseDTO.ProfessorName ?? existingCourse.Profesor;
+
+                var updatedCourse = await _courseService.UpdateCourseAsync(existingCourse);
+                return Ok(updatedCourse);
             }
-            var existingCourse = await _courseService.GetCourseByIdAsync(id);
-            if (existingCourse == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                return BadRequest(ex.Message);
             }
-
-            existingCourse.CName = course.CName;
-            existingCourse.Credits = course.Credits;
-            existingCourse.PId = course.Profesor.PId;
-
-            await _courseService.UpdateCourseAsync(id, existingCourse);
-            return NoContent();
         }
 
         [HttpDelete("{id}")]
@@ -107,19 +97,20 @@ namespace Orari.Controllers
             return NoContent();
         }
 
-        [HttpGet("studyprogram/{studyProgramId}")]
+        [HttpGet("study-program/{studyProgramId}")]
         [ProducesResponseType(typeof(IEnumerable<Courses>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetCoursesByStudyProgram([FromRoute] int studyProgramId)
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCoursesByStudyProgram(int studyProgramId)
         {
             try
             {
-                var courses = await _courseService.GetCoursesByStudyProgramAsync(studyProgramId);
-                return Ok(courses);
+                // Since we removed study program functionality, return empty list for now
+                // This endpoint can be removed or updated based on requirements
+                return Ok(new List<Courses>());
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return NotFound(ex.Message);
             }
         }
     }

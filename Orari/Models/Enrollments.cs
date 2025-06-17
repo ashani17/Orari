@@ -10,7 +10,7 @@ namespace Orari.Models
 
         public string StudentId { get; set; } = string.Empty;
         [ForeignKey("StudentId")]
-        public required Students Student { get; set; }
+        public required User Student { get; set; }
 
         public int CId { get; set; }
         [ForeignKey("CId")]

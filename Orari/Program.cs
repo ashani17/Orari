@@ -35,7 +35,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Configure Identity
-builder.Services.AddIdentity<Students, IdentityRole>(options =>
+builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
@@ -47,10 +47,8 @@ builder.Services.AddIdentity<Students, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // Register repositories with the DI container
-builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<IExamRepository, ExamRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
-builder.Services.AddScoped<IProfesorRepository, ProfesorRepository>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
 builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
@@ -58,10 +56,8 @@ builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddScoped<IStudyProgramRepository, StudyProgramRepository>();
 
 // Register services with the DI container
-builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<IExamService, ExamService>();
 builder.Services.AddScoped<ICourseService, CourseServices>();
-builder.Services.AddScoped<IProfesorService, ProfesorService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
@@ -122,6 +118,59 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+    var adminEmail = "admin@orari.com";
+    var adminPassword = "Admin#2024!";
+    var adminRole = "Admin";
+    var studentRole = "Student";
+    var professorRole = "Professor";
+
+    // Create roles if they don't exist
+    if (!await roleManager.RoleExistsAsync(adminRole))
+    {
+        await roleManager.CreateAsync(new IdentityRole(adminRole));
+    }
+    if (!await roleManager.RoleExistsAsync(studentRole))
+    {
+        await roleManager.CreateAsync(new IdentityRole(studentRole));
+    }
+    if (!await roleManager.RoleExistsAsync(professorRole))
+    {
+        await roleManager.CreateAsync(new IdentityRole(professorRole));
+    }
+
+    // Check if admin user exists
+    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+    if (adminUser == null)
+    {
+        var newAdmin = new User
+        {
+            UserName = adminEmail,
+            Email = adminEmail,
+            EmailConfirmed = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        var createResult = await userManager.CreateAsync(newAdmin, adminPassword);
+
+        if (createResult.Succeeded)
+        {
+            await userManager.AddToRoleAsync(newAdmin, adminRole);
+        }
+        else
+        {
+            var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
+            throw new Exception($"Failed to create admin user: {errors}");
+        }
+    }
+}
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
