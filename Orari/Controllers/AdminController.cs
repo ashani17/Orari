@@ -9,6 +9,8 @@ using Orari.Interfaces;
 using Orari.DTO.AdminDTO;
 using Orari.DTO.CoursesDTO;
 using Orari.DTO.ScheduleDTO;
+using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 
 namespace Orari.Controllers
 {
@@ -18,20 +20,22 @@ namespace Orari.Controllers
     [Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
-        private readonly EnrollmentService _enrollmentService;
+        private readonly IEnrollmentService _enrollmentService;
         private readonly UserManager<User> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ICourseService _courseService;
         private readonly IScheduleService _scheduleService;
         private readonly IRoomService _roomService;
+        private readonly ILogger<AdminController> _logger;
 
         public AdminController(
-            EnrollmentService enrollmentService,
+            IEnrollmentService enrollmentService,
             UserManager<User> userManager,
             RoleManager<IdentityRole> roleManager,
             ICourseService courseService,
             IScheduleService scheduleService,
-            IRoomService roomService)
+            IRoomService roomService,
+            ILogger<AdminController> logger)
         {
             _enrollmentService = enrollmentService;
             _userManager = userManager;
@@ -39,6 +43,7 @@ namespace Orari.Controllers
             _courseService = courseService;
             _scheduleService = scheduleService;
             _roomService = roomService;
+            _logger = logger;
         }
 
         // User Management
@@ -54,15 +59,15 @@ namespace Orari.Controllers
                 var roles = await _userManager.GetRolesAsync(user);
                 userList.Add(new
                 {
-                    Id = user.Id,
-                    Email = user.Email,
-                    UserName = user.UserName,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    EmailConfirmed = user.EmailConfirmed,
-                    CreatedAt = user.CreatedAt,
-                    UpdatedAt = user.UpdatedAt,
-                    Roles = roles
+                    id = user.Id,
+                    email = user.Email,
+                    userName = user.UserName,
+                    firstName = user.FirstName,
+                    lastName = user.LastName,
+                    emailConfirmed = user.EmailConfirmed,
+                    createdAt = user.CreatedAt,
+                    updatedAt = user.UpdatedAt,
+                    roles = roles
                 });
             }
             
@@ -150,11 +155,28 @@ namespace Orari.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CreateProfessor([FromBody] CreateProfessorDTO professor)
         {
+            _logger.LogInformation("CreateProfessor endpoint called");
+            
+            // Log authentication info
+            _logger.LogInformation("User authenticated: {IsAuthenticated}", User.Identity?.IsAuthenticated);
+            _logger.LogInformation("User name: {UserName}", User.Identity?.Name);
+            
+            // Log user claims
+            var claims = User.Claims.Select(c => $"{c.Type}: {c.Value}").ToList();
+            _logger.LogInformation("User claims: {Claims}", string.Join(", ", claims));
+            
+            // Log user roles
+            var roles = User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToList();
+            _logger.LogInformation("User roles: {Roles}", string.Join(", ", roles));
+            
             // Only admins can create professors - this endpoint is protected by [Authorize(Roles = "Admin")]
             if (professor == null)
             {
+                _logger.LogWarning("CreateProfessor called with null professor data");
                 return BadRequest("Professor data is required");
             }
+
+            _logger.LogInformation("Creating professor with email: {Email}", professor.Email);
 
             // Create User
             var user = new User
@@ -172,15 +194,22 @@ namespace Orari.Controllers
             var result = await _userManager.CreateAsync(user, professor.Password);
             if (!result.Succeeded)
             {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                _logger.LogError("Failed to create professor: {Errors}", errors);
                 return BadRequest(result.Errors);
             }
+
+            _logger.LogInformation("Professor user created successfully with ID: {UserId}", user.Id);
 
             // Add to Professor role
             if (!await _roleManager.RoleExistsAsync("Professor"))
             {
+                _logger.LogInformation("Professor role doesn't exist, creating it");
                 await _roleManager.CreateAsync(new IdentityRole("Professor"));
             }
             await _userManager.AddToRoleAsync(user, "Professor");
+
+            _logger.LogInformation("Professor role assigned successfully");
 
             return CreatedAtAction(nameof(GetAllUsers), new { id = user.Id }, new { user.Id, user.Email, Roles = new[] { "Professor" } });
         }
@@ -294,15 +323,23 @@ namespace Orari.Controllers
         [HttpPost("courses")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CreateCourse([FromBody] Courses course)
+        public async Task<IActionResult> CreateCourse([FromBody] PostCourseDTO dto)
         {
-            if (course == null)
+            if (dto == null)
             {
                 return BadRequest("Course data is required");
             }
 
+            // No need to parse PId, just use as string
             try
             {
+                var course = new Courses
+                {
+                    CName = dto.CName,
+                    Credits = dto.Credits,
+                    PId = dto.PId,
+                    Profesor = dto.Profesor
+                };
                 var createdCourse = await _courseService.CreateCourseAsync(course);
                 return CreatedAtAction(nameof(GetAllCourses), new { id = createdCourse.CId }, createdCourse);
             }

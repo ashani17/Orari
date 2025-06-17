@@ -10,7 +10,7 @@ namespace Orari.Models
         public required string CName { get; set; }
         public int Credits { get; set; }
         [ForeignKey("PId")]
-        public int PId { get; set; }
+        public string PId { get; set; } = string.Empty;
         public required string Profesor { get; set; }
         public ICollection<Enrollments> Enrollments { get; set; }
         public ICollection<StudyProgramCourse> StudyProgramCourse { get; set; } = new List<StudyProgramCourse>();

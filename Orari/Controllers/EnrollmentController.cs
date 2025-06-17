@@ -31,7 +31,7 @@ namespace Orari.Controllers
         [HttpPost("enroll")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> EnrollStudent([FromBody] EnrollmentDTO dto)
+        public async Task<IActionResult> EnrollStudent([FromBody] EnrollmentDto dto)
         {
             var result = await _enrollmentService.EnrollStudentAsync(dto.StudentId, dto.CId);
             if (result)
@@ -44,7 +44,7 @@ namespace Orari.Controllers
         [HttpPost("unenroll")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> UnenrollStudent([FromBody] EnrollmentDTO dto)
+        public async Task<IActionResult> UnenrollStudent([FromBody] EnrollmentDto dto)
         {
             var result = await _enrollmentService.UnenrollStudentAsync(dto.StudentId, dto.CId);
             if (result)

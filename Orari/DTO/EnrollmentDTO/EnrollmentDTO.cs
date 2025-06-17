@@ -2,23 +2,11 @@
 
 namespace Orari.DTO.EnrollmentDTO
 {
-    public class EnrollmentDTO
+    public class EnrollmentDto
     {
-        public EnrollmentDTO()
-        {
-
-
-        }
-        public EnrollmentDTO(string studentId, int cId)
-        {
-            StudentId = studentId;
-            CId = cId;
-        }
-        [Required]
-        public string StudentId { get; set; }
-        [Required]
+        public int EId { get; set; }
+        public string StudentId { get; set; } = string.Empty;
         public int CId { get; set; }
-
-
+        // Add other simple fields as needed, but do NOT include navigation properties like Student or Courses
     }
 }
