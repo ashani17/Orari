@@ -38,18 +38,12 @@ namespace Orari.Repository
             return true;
         }
 
-        public Task<string?> GetAllEnrollmentsAsync()
+        public async Task<IEnumerable<Enrollments>> GetAllEnrollmentsAsync()
         {
-            var enrollments = _context.Enrollments
+            return await _context.Enrollments
                 .Include(e => e.Student)
                 .Include(e => e.Courses)
-                .ToList();
-            if (!enrollments.Any())
-            {
-                return Task.FromResult<string?>(null);
-            }
-            // Assuming you want to return a string representation of the enrollments
-            return Task.FromResult(string.Join(", ", enrollments.Select(e => $"{e.Student.FirstName} {e.Student.LastName} enrolled in {e.Courses.CName}")));
+                .ToListAsync();
         }
 
         public async Task<IEnumerable<User>> GetCourseStudentsAsync(int courseId)

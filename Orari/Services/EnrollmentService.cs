@@ -19,7 +19,7 @@ namespace Orari.Services
             return await _enrollmentRepository.EnrollStudentAsync(studentId, CId);
         }
 
-        public async Task<string?> GetAllEnrollmentsAsync()
+        public async Task<IEnumerable<Enrollments>> GetAllEnrollmentsAsync()
         {
             return await _enrollmentRepository.GetAllEnrollmentsAsync();
         }

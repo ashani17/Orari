@@ -9,6 +9,7 @@ using Orari.Interfaces;
 using Orari.DTO.AdminDTO;
 using Orari.DTO.CoursesDTO;
 using Orari.DTO.ScheduleDTO;
+using Orari.DTO.EnrollmentDTO;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 
@@ -64,10 +65,11 @@ namespace Orari.Controllers
                     userName = user.UserName,
                     firstName = user.FirstName,
                     lastName = user.LastName,
+                    phone = user.Phone,
                     emailConfirmed = user.EmailConfirmed,
                     createdAt = user.CreatedAt,
                     updatedAt = user.UpdatedAt,
-                    roles = roles
+                    roles = roles.ToArray()
                 });
             }
             
@@ -317,7 +319,51 @@ namespace Orari.Controllers
         public async Task<IActionResult> GetAllCourses()
         {
             var courses = await _courseService.GetAllCoursesAsync();
-            return Ok(courses);
+            
+            // Map to DTOs to avoid circular references
+            var courseDtos = courses.Select(c => new GetDelCourseDTO
+            {
+                CId = c.CId,
+                CName = c.CName,
+                Credits = c.Credits,
+                PId = c.PId,
+                Profesor = c.Profesor
+            });
+            
+            return Ok(courseDtos);
+        }
+
+        [HttpGet("courses/with-enrollments")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAllCoursesWithEnrollments()
+        {
+            var courses = await _courseService.GetAllCoursesAsync();
+            
+            // Map to DTOs with enrollment information
+            var courseDtos = new List<CourseWithEnrollmentsDTO>();
+            
+            foreach (var course in courses)
+            {
+                var courseDto = new CourseWithEnrollmentsDTO
+                {
+                    CId = course.CId,
+                    CName = course.CName,
+                    Credits = course.Credits,
+                    PId = course.PId,
+                    Profesor = course.Profesor,
+                    Enrollments = course.Enrollments?.Select(e => new Orari.DTO.EnrollmentDTO.EnrollmentSummaryDTO
+                    {
+                        EId = e.EId,
+                        StudentId = e.StudentId,
+                        StudentName = $"{e.Student?.FirstName} {e.Student?.LastName}".Trim(),
+                        StudentEmail = e.Student?.Email ?? string.Empty
+                    }).ToList() ?? new List<Orari.DTO.EnrollmentDTO.EnrollmentSummaryDTO>()
+                };
+                
+                courseDtos.Add(courseDto);
+            }
+            
+            return Ok(courseDtos);
         }
 
         [HttpPost("courses")]
@@ -366,11 +412,25 @@ namespace Orari.Controllers
 
         // Enrollment Management
         [HttpGet("enrollments")]
-        [ProducesResponseType(typeof(IEnumerable<Enrollments>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<EnrollmentWithDetailsDTO>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAllEnrollments()
         {
             var enrollments = await _enrollmentService.GetAllEnrollmentsAsync();
-            return Ok(enrollments);
+            
+            // Map to DTOs to avoid circular references
+            var enrollmentDtos = enrollments.Select(e => new EnrollmentWithDetailsDTO
+            {
+                EId = e.EId,
+                StudentId = e.StudentId,
+                StudentName = $"{e.Student?.FirstName} {e.Student?.LastName}".Trim(),
+                StudentEmail = e.Student?.Email ?? string.Empty,
+                CId = e.CId,
+                CourseName = e.Courses?.CName ?? string.Empty,
+                CourseCredits = e.Courses?.Credits ?? 0,
+                ProfessorName = e.Courses?.Profesor ?? string.Empty
+            });
+            
+            return Ok(enrollmentDtos);
         }
 
         [HttpPost("enrollments")]

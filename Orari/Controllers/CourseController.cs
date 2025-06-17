@@ -20,11 +20,22 @@ namespace Orari.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<Courses>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<GetDelCourseDTO>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAllCourses()
         {
             var courses = await _courseService.GetAllCoursesAsync();
-            return Ok(courses);
+            
+            // Map to DTOs to avoid circular references
+            var courseDtos = courses.Select(c => new GetDelCourseDTO
+            {
+                CId = c.CId,
+                CName = c.CName,
+                Credits = c.Credits,
+                PId = c.PId,
+                Profesor = c.Profesor
+            });
+            
+            return Ok(courseDtos);
         }
 
         [HttpGet("{id}")]
