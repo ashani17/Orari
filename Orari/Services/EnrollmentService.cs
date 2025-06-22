@@ -1,5 +1,8 @@
 ﻿using Orari.Interfaces;
 using Orari.Models;
+using Orari.Repository;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Orari.Services
 {
@@ -11,49 +14,59 @@ namespace Orari.Services
             _enrollmentRepository = enrollmentRepository;
         }
 
-        public async Task<bool> EnrollStudentAsync(int studentId, int courseId)
+        public async Task<bool> EnrollStudentAsync(string studentId, int CId)
         {
-            var existingEnrollments = await _enrollmentRepository.GetStudentCoursesAsync(studentId);
-            if (existingEnrollments.Any(course => course.CId == courseId))
-            {
-                throw new Exception("Student is already enrolled in this course");
-            }
-            return await _enrollmentRepository.EnrollStudentAsync(studentId, courseId);
+            return await _enrollmentRepository.EnrollStudentAsync(studentId, CId);
         }
 
-        public Task<string?> GetAllEnrollmentsAsync()
+        public async Task<IEnumerable<Enrollments>> GetAllEnrollmentsAsync()
         {
-            return _enrollmentRepository.GetAllEnrollmentsAsync();
+            return await _enrollmentRepository.GetAllEnrollmentsAsync();
         }
 
-        public async Task<IEnumerable<Students>> GetCourseStudentsAsync(int courseId)
+        public async Task<IEnumerable<User>> GetCourseStudentsAsync(int courseId)
         {
-            var students = _enrollmentRepository.GetCourseStudentsAsync(courseId);
-            if (students == null)
+            var students = await _enrollmentRepository.GetCourseStudentsAsync(courseId);
+            if (students == null || !students.Any())
             {
                 throw new Exception("No students found for this course");
             }
-            return await _enrollmentRepository.GetCourseStudentsAsync(courseId);
+            return students;
         }
 
-        public Task<IEnumerable<Courses>> GetStudentCoursesAsync(int studentId)
+        public async Task<IEnumerable<Courses>> GetStudentCoursesAsync(string studentId)
         {
-            var courses = _enrollmentRepository.GetStudentCoursesAsync(studentId);
-            if (courses == null)
+            return await _enrollmentRepository.GetStudentCoursesAsync(studentId);
+        }
+
+        public async Task<bool> UnenrollStudentAsync(string studentId, int courseId)
+        {
+            return await _enrollmentRepository.UnenrollStudentAsync(studentId, courseId);
+        }
+
+        public async Task<IEnumerable<Courses>> GetStudentCoursesByEmailAsync(string email)
+        {
+            var courses = await _enrollmentRepository.GetStudentCoursesByEmailAsync(email);
+            if (courses == null || !courses.Any())
             {
                 throw new Exception("No courses found for this student");
             }
-            return _enrollmentRepository.GetStudentCoursesAsync(studentId);
+            return courses;
         }
 
-        public async Task<bool> UnenrollStudentAsync(int studentId, int courseId)
+        public async Task<IEnumerable<User>> GetCourseStudentsByNameAsync(string courseName)
         {
-            var existingEnrollments = await _enrollmentRepository.GetStudentCoursesAsync(studentId);
-            if (!existingEnrollments.Any(course => course.CId == courseId))
+            var students = await _enrollmentRepository.GetCourseStudentsByNameAsync(courseName);
+            if (students == null || !students.Any())
             {
-                throw new Exception("Student is not enrolled in this course");
+                throw new Exception("No students found for this course");
             }
-            return await _enrollmentRepository.UnenrollStudentAsync(studentId, courseId);
+            return students;
+        }
+
+        public IEnumerable<Enrollments> GetEnrollmentsByStudentId(string studentId)
+        {
+            return _enrollmentRepository.GetEnrollmentsByStudentId(studentId);
         }
     }
 }

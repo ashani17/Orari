@@ -4,13 +4,12 @@ namespace Orari.Interfaces
 {
     public interface IScheduleRepository
     {
-        Task<IEnumerable<Schedules>> GetAllSchedules();
-        Task<Schedules> GetScheduleByIdAsync(int id);
-        Task<Schedules> GetScheduleByDateAndTimeAsync(DateOnly date, TimeOnly starttime, TimeOnly endtime);
+        Task<IEnumerable<Schedules>> GetAllSchedulesAsync();
+        Task<Schedules?> GetScheduleByIdAsync(int id);
         Task<Schedules> CreateScheduleAsync(Schedules schedule);
         Task<Schedules> UpdateScheduleAsync(Schedules schedule);
         Task<bool> DeleteScheduleAsync(int id);
-        Task<string?> GetSchedulesByProfesorAsync(int id);
-        Task<string?> GetSchedulesByRoomAsync(int id);
+        Task<IEnumerable<Schedules>> GetSchedulesByCourseAsync(int courseId);
+        Task<IEnumerable<Schedules>> GetSchedulesByProfessorAsync(string professorId);
     }
 }

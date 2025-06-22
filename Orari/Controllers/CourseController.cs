@@ -7,29 +7,43 @@ using Orari.Services;
 
 namespace Orari.Controllers
 {
-    [Route("api/[controller]")]
+    [ApiController]
+    [Route("api/courses")]
+    [Produces("application/json")]
     public class CourseController : Controller
     {
-       
         private readonly ICourseService _courseService;
 
         public CourseController(ICourseService courseService)
         {
-            
             _courseService = courseService;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        [ProducesResponseType(typeof(IEnumerable<GetDelCourseDTO>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAllCourses()
         {
-            var courses = await _courseService.GetAllCourses();
-            return Ok(courses);
+            var courses = await _courseService.GetAllCoursesAsync();
+            
+            // Map to DTOs to avoid circular references
+            var courseDtos = courses.Select(c => new GetDelCourseDTO
+            {
+                CId = c.CId,
+                CName = c.CName,
+                Credits = c.Credits,
+                PId = c.PId,
+                Profesor = c.Profesor
+            });
+            
+            return Ok(courseDtos);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById([FromBody] GetDelCourseDTO dto)
+        [ProducesResponseType(typeof(Courses), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCourseById([FromRoute] int id)
         {
-            var course = await _courseService.GetCourseByIdAsync(dto.CId);
+            var course = await _courseService.GetCourseByIdAsync(id);
             if (course == null)
             {
                 return NotFound();
@@ -38,62 +52,77 @@ namespace Orari.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] PostCourseDTO course)
+        [ProducesResponseType(typeof(Courses), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> CreateCourse([FromBody] Courses course)
         {
-            if (course == null)
+            try
             {
-                return BadRequest();
+                var createdCourse = await _courseService.CreateCourseAsync(course);
+                return CreatedAtAction(nameof(GetCourseById), new { id = createdCourse.CId }, createdCourse);
             }
-
-            var courseModel = new Courses
+            catch (Exception ex)
             {
-                CName = course.CName,
-                Credits = course.Credits,
-                PId = course.Profesor.PId,
-                Profesor = course.Profesor.PEmail // Fix: Set the required 'Profesor' property
-            };
-
-            var createdCourse = await _courseService.CreateCourseAsync(courseModel);
-            return CreatedAtAction(nameof(GetById), new { id = createdCourse.CId }, createdCourse);
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] PutCourseDTO course)
+        [ProducesResponseType(typeof(Courses), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UpdateCourse(int id, [FromBody] PutCourseDTO putCourseDTO)
         {
-            if (course == null)
+            try
             {
-                return BadRequest();
+                var existingCourse = await _courseService.GetCourseByIdAsync(id);
+                if (existingCourse == null)
+                {
+                    return NotFound("Course not found");
+                }
+
+                existingCourse.CName = putCourseDTO.CName;
+                existingCourse.Credits = putCourseDTO.Credits;
+                existingCourse.Profesor = putCourseDTO.ProfessorName ?? existingCourse.Profesor;
+
+                var updatedCourse = await _courseService.UpdateCourseAsync(existingCourse);
+                return Ok(updatedCourse);
             }
-            var existingCourse = await _courseService.GetCourseByIdAsync(id);
-            if (existingCourse == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                return BadRequest(ex.Message);
             }
-
-            // Update the properties of the existing course
-            existingCourse.CName = course.CName;
-            existingCourse.Credits = course.Credits;
-
-            // Fix: Assign the 'PName' property of 'Profesors' to the 'Profesor' string field
-            existingCourse.PId = course.Profesor.PId;
-
-            // Pass both the id and the updated course object to the UpdateCourseAsync method
-            await _courseService.UpdateCourseAsync(id, existingCourse);
-
-            return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete([FromBody] GetDelCourseDTO dto)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Delete([FromRoute] int id)
         {
-            var course = await _courseService.GetCourseByIdAsync(dto.CId);
+            var course = await _courseService.GetCourseByIdAsync(id);
             if (course == null)
             {
                 return NotFound();
             }
-            await _courseService.DeleteCourseAsync(dto.CId);
+            await _courseService.DeleteCourseAsync(id);
             return NoContent();
         }
 
+        [HttpGet("study-program/{studyProgramId}")]
+        [ProducesResponseType(typeof(IEnumerable<Courses>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCoursesByStudyProgram(int studyProgramId)
+        {
+            try
+            {
+                // Since we removed study program functionality, return empty list for now
+                // This endpoint can be removed or updated based on requirements
+                return Ok(new List<Courses>());
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
     }
 }

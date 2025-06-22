@@ -6,7 +6,6 @@ namespace Orari.DTO.ScheduleDTO
 {
     public class PostScheduleDTO
     {
-
         [Required]
         public DateOnly Date { get; set; }
 
@@ -17,10 +16,12 @@ namespace Orari.DTO.ScheduleDTO
         public TimeOnly EndTime { get; set; }
 
         [Required]
-        public string Room { get; set; }
+        public int RId { get; set; }  // Room ID
+
         [Required]
-        public string Profesor { get; set; }
+        public string ProfessorId { get; set; }  // Professor User ID (string)
+
         [Required]
-        public string Course { get; set; }
+        public int CId { get; set; }  // Course ID
     }
 }
