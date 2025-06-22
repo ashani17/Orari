@@ -7,24 +7,34 @@ namespace Orari.Models
     {
         [Key]
         public int EId { get; set; }
-        public required string ExamName { get; set; }
-        public required DateOnly ExamDate { get; set; }
-        public required TimeOnly StartTime { get; set; }
-        public required TimeOnly EndTime { get; set; }
+
+        [Required]
+        public string ExamName { get; set; } = string.Empty;
+
+        [Required]
+        public DateTime ExamDate { get; set; }
+
+        [Required]
+        public TimeSpan StartTime { get; set; }
+
+        [Required]
+        public TimeSpan EndTime { get; set; }
 
         public int CId { get; set; }
-        public int CourseCId { get; set; }
-        public Courses Course { get; set; }
+        [ForeignKey("CId")]
+        public required Courses Course { get; set; }
 
-        public int SCId { get; set; }
-        public Schedules Schedule { get; set; }
+        public int? SCId { get; set; }
+        [ForeignKey("SCId")]
+        public Schedules? Schedule { get; set; }
 
-        public int PId { get; set; }
-        public int ProfesorPId { get; set; }
-        public Profesors Profesor { get; set; }
+        // Reference to User (professor) instead of Profesors
+        public string? ProfessorId { get; set; }
+        [ForeignKey("ProfessorId")]
+        public User? Professor { get; set; }
 
         public int RId { get; set; }
-        public int RoomRId { get; set; }
-        public Rooms Room { get; set; }
+        [ForeignKey("RId")]
+        public required Rooms Room { get; set; }
     }
 }

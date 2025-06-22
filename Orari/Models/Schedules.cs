@@ -6,21 +6,26 @@ namespace Orari.Models
     public class Schedules
     {
         [Key]
-        public int SCId { get; set; }
+        public int SId { get; set; }
         public DateOnly Date { get; set; }
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
-        [ForeignKey("RId")]
+        
         public int RId { get; set; }
-        public required string Room { get; set; }
-        [ForeignKey("PId")]
-        public int PId { get; set; }
-        public required string Profesor { get; set; }
-        [ForeignKey("CId")]
+        [ForeignKey("RId")]
+        public required Rooms Room { get; set; }
+        
+        // Reference to User (professor) instead of old PId structure
+        public string? ProfessorId { get; set; }
+        [ForeignKey("ProfessorId")]
+        public User? Professor { get; set; }
+        
         public int CId { get; set; }
-        public required string Course { get; set; }
-        [ForeignKey("EId")]
+        [ForeignKey("CId")]
+        public required Courses Course { get; set; }
+        
         public int? EId { get; set; }
+        [ForeignKey("EId")]
         public Exams? Exam { get; set; }
     }
 }

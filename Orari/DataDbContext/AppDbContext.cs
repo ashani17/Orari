@@ -1,16 +1,15 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Orari.Models;
 
 namespace Orari.DataDbContext
 {
-    public class AppDbContext : Microsoft.EntityFrameworkCore.DbContext
+    public class AppDbContext : IdentityDbContext<User>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
 
-        public DbSet<Students> Students { get; set; }
-        public DbSet<Profesors> Profesors { get; set; }
         public DbSet<Courses> Courses { get; set; }
         public DbSet<Rooms> Rooms { get; set; }
         public DbSet<Schedules> Schedules { get; set; }
@@ -22,6 +21,8 @@ namespace Orari.DataDbContext
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             // Configure optional one-to-one relationship between Exams and Schedules
             modelBuilder.Entity<Exams>()
                 .HasOne(e => e.Schedule)
@@ -35,11 +36,12 @@ namespace Orari.DataDbContext
                 .WithMany()
                 .HasForeignKey(e => e.CId);
 
-            // Configure Exam-Professor relationship using PId
+            // Configure Exam-Professor relationship using ProfessorId
             modelBuilder.Entity<Exams>()
-                .HasOne(e => e.Profesor)
+                .HasOne(e => e.Professor)
                 .WithMany()
-                .HasForeignKey(e => e.PId);
+                .HasForeignKey(e => e.ProfessorId)
+                .IsRequired(false);  // Make the relationship optional
 
             // Configure Exam-Room relationship using RId
             modelBuilder.Entity<Exams>()
@@ -47,7 +49,12 @@ namespace Orari.DataDbContext
                 .WithMany()
                 .HasForeignKey(e => e.RId);
 
-            base.OnModelCreating(modelBuilder);
+            // Configure Schedule-Professor relationship using ProfessorId
+            modelBuilder.Entity<Schedules>()
+                .HasOne(s => s.Professor)
+                .WithMany()
+                .HasForeignKey(s => s.ProfessorId)
+                .IsRequired(false);  // Make the relationship optional
 
             modelBuilder.Entity<StudyProgramCourse>()
                 .HasKey(spc => spc.Id); // Or composite key if applicable
@@ -66,8 +73,12 @@ namespace Orari.DataDbContext
                 .HasOne(sp => sp.Departments)
                 .WithMany(d => d.StudyPrograms)
                 .HasForeignKey(sp => sp.DId);
+
+            // Configure Enrollments-User relationship (instead of Students)
+            modelBuilder.Entity<Enrollments>()
+                .HasOne(e => e.Student)
+                .WithMany()
+                .HasForeignKey(e => e.StudentId);
         }
-
-
     }
 }
