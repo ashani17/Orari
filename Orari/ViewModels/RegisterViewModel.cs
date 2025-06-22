@@ -5,6 +5,14 @@ namespace Orari.ViewModels
     public class RegisterViewModel
     {
         [Required]
+        [Display(Name = "First Name")]
+        public required string Name { get; set; }
+
+        [Required]
+        [Display(Name = "Last Name")]
+        public required string LastName { get; set; }
+
+        [Required]
         [EmailAddress]
         public required string Email { get; set; }
 

@@ -16,47 +16,63 @@ namespace Orari.Controllers
     {
 
         private readonly IScheduleService _scheduleService;
-        private readonly IRoomService _roomService;
-        private readonly IProfesorService _profesorService;
-        private readonly ICourseService _courseService;
         private readonly IExamService _examService;
+        private readonly IRoomService _roomService;
+        private readonly ICourseService _courseService;
 
-        public ScheduleController(IScheduleService scheduleService, IExamService examService, IRoomService roomService, IProfesorService profesorService, ICourseService courseService)
+        public ScheduleController(IScheduleService scheduleService, IExamService examService, IRoomService roomService, ICourseService courseService)
         {
-
             _scheduleService = scheduleService;
-            _courseService = courseService;
             _examService = examService;
             _roomService = roomService;
-            _profesorService = profesorService;
+            _courseService = courseService;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        [ProducesResponseType(typeof(IEnumerable<Schedules>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAllSchedules()
         {
-            var schedules = await _scheduleService.GetAllSchedules();
+            var schedules = await _scheduleService.GetAllSchedulesAsync();
             return Ok(schedules);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById([FromBody] GetDelScheduleDTO dto)
+        [ProducesResponseType(typeof(Schedules), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetScheduleById(int id)
         {
-            var schedule = await _scheduleService.GetScheduleByIdAsync(dto.SCId);
+            var schedule = await _scheduleService.GetScheduleByIdAsync(id);
             if (schedule == null)
             {
-                return NotFound();
+                return NotFound("Schedule not found");
             }
             return Ok(schedule);
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateScheduleAsync([FromBody] PostScheduleDTO schedule)
+        [ProducesResponseType(typeof(Schedules), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> CreateSchedule([FromBody] PostScheduleDTO schedule)
         {
             try
             {
                 if (schedule == null)
                 {
                     return BadRequest("Schedule data is required");
+                }
+
+                // Get the required entities
+                var room = await _roomService.GetRoomByIdAsync(schedule.RId);
+                var course = await _courseService.GetCourseByIdAsync(schedule.CId);
+                
+                if (room == null)
+                {
+                    return BadRequest("Room not found");
+                }
+                
+                if (course == null)
+                {
+                    return BadRequest("Course not found");
                 }
 
                 // Map the PostScheduleDTO to the Schedules model
@@ -66,17 +82,16 @@ namespace Orari.Controllers
                     StartTime = schedule.StartTime,
                     EndTime = schedule.EndTime,
                     RId = schedule.RId,
-                    PId = schedule.PId,
+                    ProfessorId = schedule.ProfessorId,
                     CId = schedule.CId,
-                    Room = schedule.Room,
-                    Profesor = schedule.Profesor,
-                    Course = schedule.Course,
+                    Room = room,
+                    Course = course,
                     EId = null,  // No exam initially
                     Exam = null
                 };
 
                 var createdSchedule = await _scheduleService.CreateScheduleAsync(scheduleModel);
-                return Ok(createdSchedule);
+                return CreatedAtAction(nameof(GetScheduleById), new { id = createdSchedule.SId }, createdSchedule);
             }
             catch (Exception ex)
             {
@@ -85,57 +100,90 @@ namespace Orari.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] PutScheduleDTO schedule)
+        [ProducesResponseType(typeof(Schedules), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UpdateSchedule(int id, [FromBody] PutScheduleDTO schedule)
         {
-            if (schedule == null)
+            try
             {
-                return BadRequest();
+                if (schedule == null)
+                {
+                    return BadRequest("Schedule data is required");
+                }
+                
+                var existingSchedule = await _scheduleService.GetScheduleByIdAsync(id);
+                if (existingSchedule == null)
+                {
+                    return NotFound("Schedule not found");
+                }
+                
+                existingSchedule.Date = schedule.Date;
+                existingSchedule.StartTime = schedule.StartTime;
+                existingSchedule.EndTime = schedule.EndTime;
+                existingSchedule.ProfessorId = schedule.ProfessorId;
+                existingSchedule.Exam = schedule.Exam;
+
+                var updatedSchedule = await _scheduleService.UpdateScheduleAsync(existingSchedule);
+                return Ok(updatedSchedule);
             }
-            var existingSchedule = await _scheduleService.GetScheduleByIdAsync(id);
-            if (existingSchedule == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                return BadRequest(ex.Message);
             }
-            existingSchedule.Date = schedule.Date;
-            existingSchedule.StartTime = schedule.StartTime;
-            existingSchedule.EndTime = schedule.EndTime;
-            existingSchedule.Profesor = schedule.Profesor;
-            existingSchedule.Room = schedule.Room;
-            existingSchedule.Course = schedule.Course;
-            existingSchedule.Exam = schedule.Exam;
-
-
-            var updatedSchedule = await _scheduleService.UpdateScheduleAsync(existingSchedule);
-            return Ok(updatedSchedule);
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete([FromBody] GetDelScheduleDTO dto)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteSchedule(int id)
         {
-            var schedule = await _scheduleService.GetScheduleByIdAsync(dto.SCId);
+            var schedule = await _scheduleService.GetScheduleByIdAsync(id);
             if (schedule == null)
             {
-                return NotFound();
+                return NotFound("Schedule not found");
             }
-            await _scheduleService.DeleteScheduleAsync(dto.SCId);
+            await _scheduleService.DeleteScheduleAsync(id);
             return NoContent();
         }
 
-        [HttpGet("profesor/{id}")]
-        public async Task<IActionResult> GetByProfesor([FromBody] GetDelProfesorDTO dto)
+        [HttpGet("professor/{professorId}")]
+        [ProducesResponseType(typeof(IEnumerable<Schedules>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetSchedulesByProfessor(string professorId)
         {
-            var schedules = await _scheduleService.GetSchedulesByProfesorAsync(dto.PId);
-            return Ok(schedules);
+            try
+            {
+                var schedules = await _scheduleService.GetSchedulesByProfessorAsync(professorId);
+                return Ok(schedules);
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
-        [HttpGet("room/{id}")]
-        public async Task<IActionResult> GetByRoom([FromBody] GetDelRoomDTO dto)
+        [HttpGet("room/{roomId}")]
+        [ProducesResponseType(typeof(IEnumerable<Schedules>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetSchedulesByRoom(int roomId)
         {
-            var schedules = await _scheduleService.GetSchedulesByRoomAsync(dto.RId);
-            return Ok(schedules);
+            try
+            {
+                // Since we removed room-specific functionality, return empty list for now
+                // This endpoint can be removed or updated based on requirements
+                return Ok(new List<Schedules>());
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         [HttpPost("{id}/exam")]
+        [ProducesResponseType(typeof(Schedules), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> AddExamToSchedule(int id, [FromBody] AddExamToScheduleDTO examDto)
         {
             try
@@ -146,17 +194,33 @@ namespace Orari.Controllers
                     return NotFound("Schedule not found");
                 }
 
-                // Create the exam
+                // Get the required Course and Room for the exam
+                var course = await _courseService.GetCourseByIdAsync(schedule.CId);
+                var room = await _roomService.GetRoomByIdAsync(schedule.RId);
+                
+                if (course == null)
+                {
+                    return BadRequest("Course not found");
+                }
+                
+                if (room == null)
+                {
+                    return BadRequest("Room not found");
+                }
+
+                // Create the exam with required members
                 var exam = new Exams
                 {
                     ExamName = examDto.ExamName,
-                    ExamDate = examDto.ExamDate,
-                    StartTime = examDto.StartTime,
-                    EndTime = examDto.EndTime,
+                    ExamDate = examDto.ExamDate.ToDateTime(TimeOnly.MinValue), // Convert DateOnly to DateTime
+                    StartTime = examDto.StartTime.ToTimeSpan(), // Convert TimeOnly to TimeSpan
+                    EndTime = examDto.EndTime.ToTimeSpan(), // Convert TimeOnly to TimeSpan
                     CId = schedule.CId,
-                    PId = schedule.PId,
+                    ProfessorId = schedule.ProfessorId, // Use ProfessorId instead of PId
                     RId = schedule.RId,
-                    SCId = schedule.SCId
+                    SCId = schedule.SId, // Use SId instead of SCId
+                    Course = course, // Required member
+                    Room = room // Required member
                 };
 
                 // Create the exam
@@ -174,6 +238,5 @@ namespace Orari.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
     }
 }

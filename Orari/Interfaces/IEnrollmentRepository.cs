@@ -4,12 +4,13 @@ namespace Orari.Interfaces
 {
     public interface IEnrollmentRepository
     {
-        Task<bool> EnrollStudentAsync(int studentId, int courseId);
-        Task<bool> UnenrollStudentAsync(int studentId, int courseId);
-        Task<IEnumerable<Courses>> GetStudentCoursesAsync(int studentId);
-        Task<IEnumerable<Students>> GetCourseStudentsAsync(int courseId);
-        Task<string?> GetAllEnrollmentsAsync();
+        Task<bool> EnrollStudentAsync(string studentId, int CId);
+        Task<IEnumerable<Enrollments>> GetAllEnrollmentsAsync();
+        Task<IEnumerable<User>> GetCourseStudentsAsync(int courseId);
+        Task<IEnumerable<Courses>> GetStudentCoursesAsync(string studentId);
+        Task<bool> UnenrollStudentAsync(string studentId, int courseId);
         Task<IEnumerable<Courses>> GetStudentCoursesByEmailAsync(string email);
-        Task<IEnumerable<Students>> GetCourseStudentsByNameAsync(string courseName);
+        Task<IEnumerable<User>> GetCourseStudentsByNameAsync(string courseName);
+        IEnumerable<Enrollments> GetEnrollmentsByStudentId(string studentId);
     }
 }

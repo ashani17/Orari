@@ -8,14 +8,12 @@ namespace Orari.Services
     {
         private readonly IExamRepository _examRepository;
         private readonly IScheduleRepository _scheduleRepository;
-        private readonly IProfesorRepository _professorRepository;
         private readonly ICourseRepository _courseRepository;
         public readonly IRoomRepository _roomRepository;
-        public ExamService(IExamRepository examRepository, IScheduleRepository scheduleRepository, IProfesorRepository profesorRepository, ICourseRepository courseRepository, IRoomRepository roomRepository)
+        public ExamService(IExamRepository examRepository, IScheduleRepository scheduleRepository, ICourseRepository courseRepository, IRoomRepository roomRepository)
         {
             _examRepository = examRepository;
             _scheduleRepository = scheduleRepository;
-            _professorRepository = profesorRepository;
             _courseRepository = courseRepository;
             _roomRepository = roomRepository;
         }
@@ -28,27 +26,24 @@ namespace Orari.Services
                 throw new Exception("Exam name is required");
             }
 
+            if (exam.ExamDate < DateTime.Today)
+            {
+                throw new Exception("Exam date cannot be in the past");
+            }
+
+            if (exam.StartTime >= exam.EndTime)
+            {
+                throw new Exception("Start time must be before end time");
+            }
+
             // Validate Course
             var course = await _courseRepository.GetCourseByIdAsync(exam.CId);
             if (course == null)
             {
                 throw new Exception("Course not found");
             }
-            
-            // Set both Course IDs
             exam.CId = course.CId;
             exam.Course = course;
-
-            // Validate Professor
-            var professor = await _professorRepository.GetProfesorByEmailAsync(exam.PId);
-            if (professor == null)
-            {
-                throw new Exception("Professor not found");
-            }
-
-            // Set both Professor IDs
-            exam.PId = professor.PId;
-            exam.Profesor = professor;
 
             // Validate Room
             var room = await _roomRepository.GetRoomByIdAsync(exam.RId);
@@ -56,38 +51,40 @@ namespace Orari.Services
             {
                 throw new Exception("Room not found");
             }
+            exam.RId = room.RId;
+            exam.Room = room;
 
             return await _examRepository.CreateExamAsync(exam);
         }
 
-        public Task<bool> DeleteExamAsync(int id)
+        public async Task<bool> DeleteExamAsync(int id)
         {
-            var existingExam = _examRepository.GetExamByIdAsync(id);
-            if (existingExam == null)
+            return await _examRepository.DeleteExamAsync(id);
+        }
+
+        public async Task<IEnumerable<Exams>> GetAllExamsAsync()
+        {
+            return await _examRepository.GetAllExamsAsync();
+        }
+
+        public async Task<Exams?> GetExamByIdAsync(int id)
+        {
+            return await _examRepository.GetExamByIdAsync(id);
+        }
+
+        public async Task<Exams> UpdateExamAsync(Exams exam)
             {
-                throw new Exception("Exam not found");
-            }
-            return _examRepository.DeleteExamAsync(id);
+            return await _examRepository.UpdateExamAsync(exam);
         }
 
-        public Task<IEnumerable<Exams>> GetAllExams()
+        public async Task<IEnumerable<Exams>> GetExamsByCourseAsync(int courseId)
         {
-            return _examRepository.GetAllExams();
+            return await _examRepository.GetExamsByCourseAsync(courseId);
         }
 
-        public Task<Exams> GetExamByIdAsync(int id)
+        public async Task<IEnumerable<Exams>> GetExamsByProfessorAsync(string professorId)
         {
-            var exam = _examRepository.GetExamByIdAsync(id);
-            if (exam == null)
-            {
-                throw new Exception("Exam not found");
-            }
-            return _examRepository.GetExamByIdAsync(id);
-        }
-
-        public Task<Exams> UpdateExamAsync(Exams exam)
-        {
-            return _examRepository.UpdateExamAsync(exam);
+            return await _examRepository.GetExamsByProfessorAsync(professorId);
         }
     }
 }

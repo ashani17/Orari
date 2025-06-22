@@ -19,86 +19,85 @@ namespace Orari.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        [ProducesResponseType(typeof(IEnumerable<Exams>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAllExams()
         {
-            var exams = await _examService.GetAllExams();
+            var exams = await _examService.GetAllExamsAsync();
             return Ok(exams);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById([FromBody] GetDelExamDTO dto)
+        [ProducesResponseType(typeof(Exams), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetExamById(int id)
         {
-            var exam = await _examService.GetExamByIdAsync(dto.EId);
+            var exam = await _examService.GetExamByIdAsync(id);
             if (exam == null)
             {
-                return NotFound();
+                return NotFound("Exam not found");
             }
             return Ok(exam);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] PostExamDTO exam)
+        [ProducesResponseType(typeof(Exams), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> CreateExam([FromBody] Exams exam)
         {
-            if (exam == null)
+            try
             {
-                return BadRequest();
+                var createdExam = await _examService.CreateExamAsync(exam);
+                return CreatedAtAction(nameof(GetExamById), new { id = createdExam.EId }, createdExam);
             }
-
-            // Map PostExamDTO to Exams model
-            var examModel = new Exams
+            catch (Exception ex)
             {
-                ExamName = exam.ExamName,
-                ExamDate = exam.ExamDate,
-                StartTime = exam.StartTime,
-                EndTime = exam.EndTime,
-                SCId = exam.ScheduleId,
-                PId = exam.ProfesorId,
-                ProfesorPId = exam.ProfesorId,
-                CId = exam.CourseId,
-                CourseCId = exam.CourseId,
-                RId = exam.RoomId,
-                RoomRId = exam.RoomId
-            };
-
-            // Pass the mapped Exams model to the service
-            var createdExam = await _examService.CreateExamAsync(examModel);
-            return CreatedAtAction(nameof(GetById), new { id = createdExam.EId }, createdExam);
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] PutExamDTO exam)
+        [ProducesResponseType(typeof(Exams), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UpdateExam(int id, [FromBody] Exams exam)
         {
-            if (exam == null)
+            try
             {
-                return BadRequest();
+                var existingExam = await _examService.GetExamByIdAsync(id);
+                if (existingExam == null)
+                {
+                    return NotFound("Exam not found");
+                }
+
+                existingExam.ExamName = exam.ExamName;
+                existingExam.ExamDate = exam.ExamDate;
+                existingExam.StartTime = exam.StartTime;
+                existingExam.EndTime = exam.EndTime;
+                existingExam.CId = exam.CId;
+                existingExam.SCId = exam.SCId;
+                existingExam.ProfessorId = exam.ProfessorId;
+                existingExam.RId = exam.RId;
+
+                var updatedExam = await _examService.UpdateExamAsync(existingExam);
+                return Ok(updatedExam);
             }
-            var existingExam = await _examService.GetExamByIdAsync(id);
-            if (existingExam == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                return BadRequest(ex.Message);
             }
-            existingExam.ExamName = exam.ExamName;
-            existingExam.ExamDate = exam.ExamDate;
-            existingExam.StartTime = exam.StartTime;
-            existingExam.EndTime = exam.EndTime;
-            existingExam.SCId = exam.ScheduleId;
-            existingExam.PId = exam.ProfesorId;
-            existingExam.CId = exam.CourseId;
-
-            await _examService.UpdateExamAsync(existingExam);
-
-            return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete([FromBody] GetDelExamDTO dto)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteExam(int id)
         {
-            var exam = await _examService.GetExamByIdAsync(dto.EId);
+            var exam = await _examService.GetExamByIdAsync(id);
             if (exam == null)
             {
-                return NotFound();
+                return NotFound("Exam not found");
             }
-            await _examService.DeleteExamAsync(dto.EId);
+            await _examService.DeleteExamAsync(id);
             return NoContent();
         }
     }

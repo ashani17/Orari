@@ -1,12 +1,22 @@
-﻿using Orari.DTO.ProfesorDTO;
+﻿using System.Text.Json.Serialization;
+using Orari.DTO.ProfesorDTO;
 
 namespace Orari.DTO.CoursesDTO
 {
     public class PostCourseDTO
     {
-        public required string CName { get; set; }
+        [JsonPropertyName("cName")]
+        public string CName { get; set; } = string.Empty;
+
+        [JsonPropertyName("credits")]
         public int Credits { get; set; }
-        public required ProfesorForCourseDTO Profesor { get; set; }
+
+        [JsonPropertyName("pId")]
+        public string PId { get; set; } = string.Empty;
+
+        [JsonPropertyName("profesor")]
+        public string Profesor { get; set; } = string.Empty;
+
         public int StudyProgramId { get; set; }
     }
 
