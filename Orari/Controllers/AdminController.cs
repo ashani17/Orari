@@ -112,6 +112,40 @@ namespace Orari.Controllers
             return Ok(professorList);
         }
 
+        [HttpGet("users/admins")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAllAdmins()
+        {
+            var admins = await _userManager.GetUsersInRoleAsync("Admin");
+            var adminList = admins.Select(a => new
+            {
+                Id = a.Id,
+                Email = a.Email,
+                FirstName = a.FirstName,
+                LastName = a.LastName,
+                CreatedAt = a.CreatedAt
+            });
+            
+            return Ok(adminList);
+        }
+
+        [AllowAnonymous]
+        [HttpGet("users/admins-public")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAllAdminsPublic()
+        {
+            var admins = await _userManager.GetUsersInRoleAsync("Admin");
+            var adminList = admins.Select(a => new
+            {
+                Id = a.Id,
+                Email = a.Email,
+                FirstName = a.FirstName,
+                LastName = a.LastName,
+                CreatedAt = a.CreatedAt
+            });
+            return Ok(adminList);
+        }
+
         [HttpPost("users/student")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -339,7 +373,7 @@ namespace Orari.Controllers
         {
             var courses = await _courseService.GetAllCoursesAsync();
             
-            // Map to DTOs with enrollment information
+            // Map to DTOs without accessing Enrollments navigation property to avoid circular references
             var courseDtos = new List<CourseWithEnrollmentsDTO>();
             
             foreach (var course in courses)
@@ -351,13 +385,8 @@ namespace Orari.Controllers
                     Credits = course.Credits,
                     PId = course.PId,
                     Profesor = course.Profesor,
-                    Enrollments = course.Enrollments?.Select(e => new Orari.DTO.EnrollmentDTO.EnrollmentSummaryDTO
-                    {
-                        EId = e.EId,
-                        StudentId = e.StudentId,
-                        StudentName = $"{e.Student?.FirstName} {e.Student?.LastName}".Trim(),
-                        StudentEmail = e.Student?.Email ?? string.Empty
-                    }).ToList() ?? new List<Orari.DTO.EnrollmentDTO.EnrollmentSummaryDTO>()
+                    // Don't access Enrollments navigation property to avoid circular reference
+                    Enrollments = new List<Orari.DTO.EnrollmentDTO.EnrollmentSummaryDTO>()
                 };
                 
                 courseDtos.Add(courseDto);
@@ -472,7 +501,25 @@ namespace Orari.Controllers
         public async Task<IActionResult> GetAllSchedules()
         {
             var schedules = await _scheduleService.GetAllSchedulesAsync();
-            return Ok(schedules);
+            
+            // Map to DTOs to avoid circular references
+            var scheduleDtos = schedules.Select(s => new GetDelScheduleDTO
+            {
+                SId = s.SId,
+                Date = s.Date,
+                StartTime = s.StartTime,
+                EndTime = s.EndTime,
+                RId = s.RId,
+                ProfessorId = s.ProfessorId,
+                CId = s.CId,
+                EId = s.EId,
+                RecurringScheduleId = s.RecurringScheduleId,
+                RoomName = s.Room?.RName,
+                CourseName = s.Course?.CName,
+                ProfessorName = s.Professor != null ? $"{s.Professor.FirstName} {s.Professor.LastName}".Trim() : null
+            });
+            
+            return Ok(scheduleDtos);
         }
 
         [HttpGet("rooms")]
@@ -537,9 +584,44 @@ namespace Orari.Controllers
                 return BadRequest("Schedule data is required");
             }
 
-            // TODO: Implement schedule creation logic
-            // var createdSchedule = await _scheduleService.CreateScheduleAsync(schedule);
-            return CreatedAtAction(nameof(GetAllSchedules), null, schedule);
+            try
+            {
+                // Get the required entities
+                var room = await _roomService.GetRoomByIdAsync(schedule.RId);
+                var course = await _courseService.GetCourseByIdAsync(schedule.CId);
+                
+                if (room == null)
+                {
+                    return BadRequest("Room not found");
+                }
+                
+                if (course == null)
+                {
+                    return BadRequest("Course not found");
+                }
+
+                // Map the PostScheduleDTO to the Schedules model
+                var scheduleModel = new Schedules
+                {
+                    Date = schedule.Date,
+                    StartTime = schedule.StartTime,
+                    EndTime = schedule.EndTime,
+                    RId = schedule.RId,
+                    ProfessorId = schedule.ProfessorId,
+                    CId = schedule.CId,
+                    Room = room,
+                    Course = course,
+                    EId = null,  // No exam initially
+                    Exam = null
+                };
+
+                var createdSchedule = await _scheduleService.CreateScheduleAsync(scheduleModel);
+                return CreatedAtAction(nameof(GetAllSchedules), new { id = createdSchedule.SId }, createdSchedule);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("schedules/{id}")]
@@ -564,9 +646,8 @@ namespace Orari.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteSchedule(int id)
         {
-            // TODO: Implement schedule deletion logic
-            // var result = await _scheduleService.DeleteScheduleAsync(id);
-            // if (!result) return NotFound("Schedule not found");
+            var result = await _scheduleService.DeleteScheduleAsync(id);
+            if (!result) return NotFound("Schedule not found");
             return NoContent();
         }
     }

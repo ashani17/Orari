@@ -18,6 +18,9 @@ namespace Orari.DataDbContext
         public DbSet<Departments> Departments { get; set; }
         public DbSet<StudyPrograms> StudyPrograms { get; set; }
         public DbSet<StudyProgramCourse> StudyProgramCourses { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<RecurringSchedule> RecurringSchedules { get; set; }
+        public DbSet<ScheduleException> ScheduleExceptions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
