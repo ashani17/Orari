@@ -13,7 +13,7 @@ namespace Orari.Models
         
         public int RId { get; set; }
         [ForeignKey("RId")]
-        public required Rooms Room { get; set; }
+        public Rooms Room { get; set; } = null!;
         
         // Reference to User (professor) instead of old PId structure
         public string? ProfessorId { get; set; }
@@ -22,10 +22,14 @@ namespace Orari.Models
         
         public int CId { get; set; }
         [ForeignKey("CId")]
-        public required Courses Course { get; set; }
+        public Courses Course { get; set; } = null!;
         
         public int? EId { get; set; }
         [ForeignKey("EId")]
         public Exams? Exam { get; set; }
+        
+        public int? RecurringScheduleId { get; set; }
+        [ForeignKey("RecurringScheduleId")]
+        public RecurringSchedule? RecurringSchedule { get; set; }
     }
 }

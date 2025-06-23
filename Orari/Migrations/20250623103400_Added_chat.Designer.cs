@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Orari.DataDbContext;
 
@@ -11,9 +12,11 @@ using Orari.DataDbContext;
 namespace Orari.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250623103400_Added_chat")]
+    partial class Added_chat
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -296,50 +299,6 @@ namespace Orari.Migrations
                     b.ToTable("Exams");
                 });
 
-            modelBuilder.Entity("Orari.Models.RecurringSchedule", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CourseId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("DayOfWeek")
-                        .HasColumnType("int");
-
-                    b.Property<DateOnly>("EndDate")
-                        .HasColumnType("date");
-
-                    b.Property<TimeOnly>("EndTime")
-                        .HasColumnType("time");
-
-                    b.Property<string>("ProfessorId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("RoomId")
-                        .HasColumnType("int");
-
-                    b.Property<DateOnly>("StartDate")
-                        .HasColumnType("date");
-
-                    b.Property<TimeOnly>("StartTime")
-                        .HasColumnType("time");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CourseId");
-
-                    b.HasIndex("ProfessorId");
-
-                    b.HasIndex("RoomId");
-
-                    b.ToTable("RecurringSchedules");
-                });
-
             modelBuilder.Entity("Orari.Models.Rooms", b =>
                 {
                     b.Property<int>("RId")
@@ -368,39 +327,6 @@ namespace Orari.Migrations
                     b.ToTable("Rooms");
                 });
 
-            modelBuilder.Entity("Orari.Models.ScheduleException", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
-
-                    b.Property<bool>("IsCancelled")
-                        .HasColumnType("bit");
-
-                    b.Property<TimeOnly?>("NewEndTime")
-                        .HasColumnType("time");
-
-                    b.Property<int?>("NewRoomId")
-                        .HasColumnType("int");
-
-                    b.Property<TimeOnly?>("NewStartTime")
-                        .HasColumnType("time");
-
-                    b.Property<int>("RecurringScheduleId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RecurringScheduleId");
-
-                    b.ToTable("ScheduleExceptions");
-                });
-
             modelBuilder.Entity("Orari.Models.Schedules", b =>
                 {
                     b.Property<int>("SId")
@@ -427,9 +353,6 @@ namespace Orari.Migrations
                     b.Property<int>("RId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("RecurringScheduleId")
-                        .HasColumnType("int");
-
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time");
 
@@ -444,8 +367,6 @@ namespace Orari.Migrations
                     b.HasIndex("ProfessorId");
 
                     b.HasIndex("RId");
-
-                    b.HasIndex("RecurringScheduleId");
 
                     b.ToTable("Schedules");
                 });
@@ -679,44 +600,6 @@ namespace Orari.Migrations
                     b.Navigation("Room");
                 });
 
-            modelBuilder.Entity("Orari.Models.RecurringSchedule", b =>
-                {
-                    b.HasOne("Orari.Models.Courses", "Course")
-                        .WithMany()
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Orari.Models.User", "Professor")
-                        .WithMany()
-                        .HasForeignKey("ProfessorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Orari.Models.Rooms", "Room")
-                        .WithMany()
-                        .HasForeignKey("RoomId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Course");
-
-                    b.Navigation("Professor");
-
-                    b.Navigation("Room");
-                });
-
-            modelBuilder.Entity("Orari.Models.ScheduleException", b =>
-                {
-                    b.HasOne("Orari.Models.RecurringSchedule", "RecurringSchedule")
-                        .WithMany()
-                        .HasForeignKey("RecurringScheduleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("RecurringSchedule");
-                });
-
             modelBuilder.Entity("Orari.Models.Schedules", b =>
                 {
                     b.HasOne("Orari.Models.Courses", "Course")
@@ -739,17 +622,11 @@ namespace Orari.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Orari.Models.RecurringSchedule", "RecurringSchedule")
-                        .WithMany()
-                        .HasForeignKey("RecurringScheduleId");
-
                     b.Navigation("Course");
 
                     b.Navigation("Exam");
 
                     b.Navigation("Professor");
-
-                    b.Navigation("RecurringSchedule");
 
                     b.Navigation("Room");
                 });

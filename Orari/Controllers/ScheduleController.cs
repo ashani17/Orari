@@ -238,5 +238,13 @@ namespace Orari.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("student/{studentId}")]
+        [ProducesResponseType(typeof(IEnumerable<Schedules>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetSchedulesByStudent(string studentId)
+        {
+            var schedules = await _scheduleService.GetSchedulesByStudentAsync(studentId);
+            return Ok(schedules);
+        }
     }
 }

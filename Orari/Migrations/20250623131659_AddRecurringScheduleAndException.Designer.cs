@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Orari.DataDbContext;
 
@@ -11,9 +12,11 @@ using Orari.DataDbContext;
 namespace Orari.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250623131659_AddRecurringScheduleAndException")]
+    partial class AddRecurringScheduleAndException
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -427,9 +430,6 @@ namespace Orari.Migrations
                     b.Property<int>("RId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("RecurringScheduleId")
-                        .HasColumnType("int");
-
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time");
 
@@ -444,8 +444,6 @@ namespace Orari.Migrations
                     b.HasIndex("ProfessorId");
 
                     b.HasIndex("RId");
-
-                    b.HasIndex("RecurringScheduleId");
 
                     b.ToTable("Schedules");
                 });
@@ -739,17 +737,11 @@ namespace Orari.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Orari.Models.RecurringSchedule", "RecurringSchedule")
-                        .WithMany()
-                        .HasForeignKey("RecurringScheduleId");
-
                     b.Navigation("Course");
 
                     b.Navigation("Exam");
 
                     b.Navigation("Professor");
-
-                    b.Navigation("RecurringSchedule");
 
                     b.Navigation("Room");
                 });
