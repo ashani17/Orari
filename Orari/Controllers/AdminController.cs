@@ -93,6 +93,7 @@ namespace Orari.Controllers
             return Ok(studentList);
         }
 
+        [AllowAnonymous]
         [HttpGet("users/professors")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAllProfessors()
@@ -348,6 +349,7 @@ namespace Orari.Controllers
         }
 
         // Course Management
+        [AllowAnonymous]
         [HttpGet("courses")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAllCourses()
@@ -439,6 +441,51 @@ namespace Orari.Controllers
             return NoContent();
         }
 
+        [HttpPut("courses/{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UpdateCourse(int id, [FromBody] PutCourseDTO putCourseDTO)
+        {
+            try
+            {
+                var existingCourse = await _courseService.GetCourseByIdAsync(id);
+                if (existingCourse == null)
+                {
+                    return NotFound("Course not found");
+                }
+
+                // Update basic course properties
+                if (!string.IsNullOrEmpty(putCourseDTO.CName))
+                    existingCourse.CName = putCourseDTO.CName;
+                if (putCourseDTO.Credits > 0)
+                    existingCourse.Credits = putCourseDTO.Credits;
+                if (!string.IsNullOrEmpty(putCourseDTO.ProfessorName))
+                    existingCourse.Profesor = putCourseDTO.ProfessorName;
+
+                // Update StudyProgramCourse relationship
+                // Remove existing relationships
+                existingCourse.StudyProgramCourse.Clear();
+                
+                // Add new relationship if StudyProgramId is greater than 0
+                if (putCourseDTO.StudyProgramId > 0)
+                {
+                    existingCourse.StudyProgramCourse.Add(new Orari.Models.StudyProgramCourse
+                    {
+                        SPId = putCourseDTO.StudyProgramId,
+                        CId = existingCourse.CId
+                    });
+                }
+
+                var updatedCourse = await _courseService.UpdateCourseAsync(existingCourse);
+                return Ok(updatedCourse);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         // Enrollment Management
         [HttpGet("enrollments")]
         [ProducesResponseType(typeof(IEnumerable<EnrollmentWithDetailsDTO>), StatusCodes.Status200OK)]
@@ -522,6 +569,7 @@ namespace Orari.Controllers
             return Ok(scheduleDtos);
         }
 
+        [AllowAnonymous]
         [HttpGet("rooms")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAllRooms()

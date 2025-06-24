@@ -23,8 +23,8 @@ builder.Services.AddCors(options =>
         policy =>
         {
             policy.WithOrigins("http://localhost:5173", "http://localhost:5174") // React app's origins
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
+                  .AllowAnyHeader() // Allow all headers
+                  .AllowAnyMethod() // Allow all HTTP methods
                   .AllowCredentials();
         });
 });
