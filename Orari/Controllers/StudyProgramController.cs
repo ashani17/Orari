@@ -51,22 +51,42 @@ namespace Orari.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateStudyProgramAsync(int id, [FromBody] PutStudyProgramDTO studyProgram)
+        public async Task<IActionResult> UpdateStudyProgramAsync([FromQuery] int id, [FromBody] PutStudyProgramDTO studyProgram)
         {
-            var existingStudyProgram = await _studyProgramService.GetStudyProgramsByNameAsync(studyProgram.SPName);
+            var existingStudyProgram = await _studyProgramService.GetStudyProgramByIdAsync(id);
             if (existingStudyProgram == null)
             {
                 return NotFound();
             }
 
-            // Map the DTO to the StudyPrograms model
-            var studyProgramModel = new StudyPrograms
-            {
-                SPName = studyProgram.SPName,
-                DId = studyProgram.DId
-            };
+            // Update the existing entity properties
+            existingStudyProgram.SPName = studyProgram.SPName;
+            existingStudyProgram.DId = studyProgram.DId;
 
-            var updatedStudyProgram = await _studyProgramService.UpdateStudyProgramAsync(studyProgramModel);
+            var updatedStudyProgram = await _studyProgramService.UpdateStudyProgramAsync(existingStudyProgram);
+
+            // --- Update StudyProgramCourse join table ---
+            using (var scope = HttpContext.RequestServices.CreateScope())
+            {
+                var db = (Orari.DataDbContext.AppDbContext)scope.ServiceProvider.GetService(typeof(Orari.DataDbContext.AppDbContext));
+                var oldLinks = db.StudyProgramCourses.Where(spc => spc.SPId == id);
+                db.StudyProgramCourses.RemoveRange(oldLinks);
+
+                if (studyProgram.CourseIds != null)
+                {
+                    foreach (var courseId in studyProgram.CourseIds)
+                    {
+                        db.StudyProgramCourses.Add(new Orari.Models.StudyProgramCourse
+                        {
+                            SPId = id,
+                            CId = courseId
+                        });
+                    }
+                }
+                db.SaveChanges();
+            }
+            // --- END ---
+
             return Ok(updatedStudyProgram);
         }
 
