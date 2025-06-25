@@ -18,6 +18,9 @@ namespace Orari.DataDbContext
         public DbSet<Departments> Departments { get; set; }
         public DbSet<StudyPrograms> StudyPrograms { get; set; }
         public DbSet<StudyProgramCourse> StudyProgramCourses { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<RecurringSchedule> RecurringSchedules { get; set; }
+        public DbSet<ScheduleException> ScheduleExceptions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -79,6 +82,13 @@ namespace Orari.DataDbContext
                 .HasOne(e => e.Student)
                 .WithMany()
                 .HasForeignKey(e => e.StudentId);
+
+            // User-StudyPrograms relationship (for students)
+            // modelBuilder.Entity<User>()
+            //     .HasOne(u => u.StudyProgram)
+            //     .WithMany()
+            //     .HasForeignKey(u => u.StudyProgramId)
+            //     .IsRequired(false);
         }
     }
 }

@@ -28,6 +28,8 @@ namespace Orari.Controllers
         private readonly IScheduleService _scheduleService;
         private readonly IRoomService _roomService;
         private readonly ILogger<AdminController> _logger;
+        private readonly IEmailService _emailService;
+        private readonly IDomainValidationService _domainValidationService;
 
         public AdminController(
             IEnrollmentService enrollmentService,
@@ -36,7 +38,9 @@ namespace Orari.Controllers
             ICourseService courseService,
             IScheduleService scheduleService,
             IRoomService roomService,
-            ILogger<AdminController> logger)
+            ILogger<AdminController> logger,
+            IEmailService emailService,
+            IDomainValidationService domainValidationService)
         {
             _enrollmentService = enrollmentService;
             _userManager = userManager;
@@ -45,6 +49,8 @@ namespace Orari.Controllers
             _scheduleService = scheduleService;
             _roomService = roomService;
             _logger = logger;
+            _emailService = emailService;
+            _domainValidationService = domainValidationService;
         }
 
         // User Management
@@ -83,16 +89,17 @@ namespace Orari.Controllers
             var students = await _userManager.GetUsersInRoleAsync("Student");
             var studentList = students.Select(s => new
             {
-                Id = s.Id,
-                Email = s.Email,
-                FirstName = s.FirstName,
-                LastName = s.LastName,
-                CreatedAt = s.CreatedAt
+                id = s.Id,
+                email = s.Email,
+                firstName = s.FirstName,
+                lastName = s.LastName,
+                createdAt = s.CreatedAt
             });
             
             return Ok(studentList);
         }
 
+        [AllowAnonymous]
         [HttpGet("users/professors")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAllProfessors()
@@ -100,120 +107,182 @@ namespace Orari.Controllers
             var professors = await _userManager.GetUsersInRoleAsync("Professor");
             var professorList = professors.Select(p => new
             {
-                Id = p.Id,
-                Email = p.Email,
-                FirstName = p.FirstName,
-                LastName = p.LastName,
-                Phone = p.Phone,
-                Availability = p.Availability,
-                CreatedAt = p.CreatedAt
+                id = p.Id,
+                email = p.Email,
+                firstName = p.FirstName,
+                lastName = p.LastName,
+                phone = p.Phone,
+                availability = p.Availability,
+                createdAt = p.CreatedAt
             });
             
             return Ok(professorList);
         }
 
+        [HttpGet("users/admins")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAllAdmins()
+        {
+            var admins = await _userManager.GetUsersInRoleAsync("Admin");
+            var adminList = admins.Select(a => new
+            {
+                id = a.Id,
+                email = a.Email,
+                firstName = a.FirstName,
+                lastName = a.LastName,
+                createdAt = a.CreatedAt
+            });
+            
+            return Ok(adminList);
+        }
+
+        [AllowAnonymous]
+        [HttpGet("users/admins-public")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAllAdminsPublic()
+        {
+            var admins = await _userManager.GetUsersInRoleAsync("Admin");
+            var adminList = admins.Select(a => new
+            {
+                id = a.Id,
+                email = a.Email,
+                firstName = a.FirstName,
+                lastName = a.LastName,
+                createdAt = a.CreatedAt
+            });
+            return Ok(adminList);
+        }
+
         [HttpPost("users/student")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CreateStudent([FromBody] CreateStudentDTO student)
+        public async Task<IActionResult> CreateStudent([FromBody] CreateStudentDTO createStudentDTO)
         {
-            // Only admins can create students through this endpoint
-            // Public registration creates students automatically
-            if (student == null)
+            try
             {
-                return BadRequest("Student data is required");
-            }
+                // Validate email domain
+                if (!_domainValidationService.IsValidDomain(createStudentDTO.Email))
+                {
+                    return BadRequest(_domainValidationService.GetDomainValidationMessage());
+                }
 
-            // Create User
-            var user = new User
-            {
-                UserName = student.Email,
-                Email = student.Email,
-                FirstName = student.FirstName,
-                LastName = student.LastName,
-                EmailConfirmed = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+                var existingUser = await _userManager.FindByEmailAsync(createStudentDTO.Email);
+                if (existingUser != null)
+                {
+                    return BadRequest("User with this email already exists.");
+                }
 
-            var result = await _userManager.CreateAsync(user, student.Password);
-            if (!result.Succeeded)
-            {
+                var user = new User
+                {
+                    UserName = createStudentDTO.Email,
+                    Email = createStudentDTO.Email,
+                    FirstName = createStudentDTO.FirstName,
+                    LastName = createStudentDTO.LastName,
+                    EmailConfirmed = false, // Changed to false to require email confirmation
+                    PhoneNumberConfirmed = true,
+                    TwoFactorEnabled = false,
+                    LockoutEnabled = false,
+                    AccessFailedCount = 0,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                var result = await _userManager.CreateAsync(user, createStudentDTO.Password);
+                if (result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(user, "Student");
+
+                    // Generate email confirmation token
+                    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    var confirmationLink = Url.Action("ConfirmEmail", "Authentication", 
+                        new { userId = user.Id, token = token }, Request.Scheme);
+
+                    try
+                    {
+                        await _emailService.SendEmailConfirmationAsync(user.Email, confirmationLink, user.FirstName);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log the error but don't fail user creation
+                        _logger.LogError(ex, "Failed to send confirmation email to {Email}", user.Email);
+                    }
+
+                    return Ok(new { message = "Student created successfully. Please check your email to confirm your account." });
+                }
+
                 return BadRequest(result.Errors);
             }
-
-            // Add to Student role
-            if (!await _roleManager.RoleExistsAsync("Student"))
+            catch (Exception ex)
             {
-                await _roleManager.CreateAsync(new IdentityRole("Student"));
+                _logger.LogError(ex, "Error creating student");
+                return StatusCode(500, "Internal server error");
             }
-            await _userManager.AddToRoleAsync(user, "Student");
-
-            return CreatedAtAction(nameof(GetAllUsers), new { id = user.Id }, new { user.Id, user.Email, Roles = new[] { "Student" } });
         }
 
         [HttpPost("users/professor")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CreateProfessor([FromBody] CreateProfessorDTO professor)
+        public async Task<IActionResult> CreateProfessor([FromBody] CreateProfessorDTO createProfessorDTO)
         {
-            _logger.LogInformation("CreateProfessor endpoint called");
-            
-            // Log authentication info
-            _logger.LogInformation("User authenticated: {IsAuthenticated}", User.Identity?.IsAuthenticated);
-            _logger.LogInformation("User name: {UserName}", User.Identity?.Name);
-            
-            // Log user claims
-            var claims = User.Claims.Select(c => $"{c.Type}: {c.Value}").ToList();
-            _logger.LogInformation("User claims: {Claims}", string.Join(", ", claims));
-            
-            // Log user roles
-            var roles = User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToList();
-            _logger.LogInformation("User roles: {Roles}", string.Join(", ", roles));
-            
-            // Only admins can create professors - this endpoint is protected by [Authorize(Roles = "Admin")]
-            if (professor == null)
+            try
             {
-                _logger.LogWarning("CreateProfessor called with null professor data");
-                return BadRequest("Professor data is required");
-            }
+                // Validate email domain
+                if (!_domainValidationService.IsValidDomain(createProfessorDTO.Email))
+                {
+                    return BadRequest(_domainValidationService.GetDomainValidationMessage());
+                }
 
-            _logger.LogInformation("Creating professor with email: {Email}", professor.Email);
+                var existingUser = await _userManager.FindByEmailAsync(createProfessorDTO.Email);
+                if (existingUser != null)
+                {
+                    return BadRequest("User with this email already exists.");
+                }
 
-            // Create User
-            var user = new User
-            {
-                UserName = professor.Email,
-                Email = professor.Email,
-                FirstName = professor.FirstName,
-                LastName = professor.LastName,
-                Phone = professor.Phone,
-                EmailConfirmed = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+                var user = new User
+                {
+                    UserName = createProfessorDTO.Email,
+                    Email = createProfessorDTO.Email,
+                    FirstName = createProfessorDTO.FirstName,
+                    LastName = createProfessorDTO.LastName,
+                    EmailConfirmed = false, // Changed to false to require email confirmation
+                    PhoneNumberConfirmed = true,
+                    TwoFactorEnabled = false,
+                    LockoutEnabled = false,
+                    AccessFailedCount = 0,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
 
-            var result = await _userManager.CreateAsync(user, professor.Password);
-            if (!result.Succeeded)
-            {
-                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                _logger.LogError("Failed to create professor: {Errors}", errors);
+                var result = await _userManager.CreateAsync(user, createProfessorDTO.Password);
+                if (result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(user, "Professor");
+
+                    // Generate email confirmation token
+                    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    var confirmationLink = Url.Action("ConfirmEmail", "Authentication", 
+                        new { userId = user.Id, token = token }, Request.Scheme);
+
+                    try
+                    {
+                        await _emailService.SendEmailConfirmationAsync(user.Email, confirmationLink, user.FirstName);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log the error but don't fail user creation
+                        _logger.LogError(ex, "Failed to send confirmation email to {Email}", user.Email);
+                    }
+
+                    return Ok(new { message = "Professor created successfully. Please check your email to confirm your account." });
+                }
+
                 return BadRequest(result.Errors);
             }
-
-            _logger.LogInformation("Professor user created successfully with ID: {UserId}", user.Id);
-
-            // Add to Professor role
-            if (!await _roleManager.RoleExistsAsync("Professor"))
+            catch (Exception ex)
             {
-                _logger.LogInformation("Professor role doesn't exist, creating it");
-                await _roleManager.CreateAsync(new IdentityRole("Professor"));
+                _logger.LogError(ex, "Error creating professor");
+                return StatusCode(500, "Internal server error");
             }
-            await _userManager.AddToRoleAsync(user, "Professor");
-
-            _logger.LogInformation("Professor role assigned successfully");
-
-            return CreatedAtAction(nameof(GetAllUsers), new { id = user.Id }, new { user.Id, user.Email, Roles = new[] { "Professor" } });
         }
 
         [HttpPost("users/admin")]
@@ -225,6 +294,12 @@ namespace Orari.Controllers
             if (admin == null)
             {
                 return BadRequest("Admin data is required");
+            }
+
+            // Validate email domain
+            if (!_domainValidationService.IsValidDomain(admin.Email))
+            {
+                return BadRequest(_domainValidationService.GetDomainValidationMessage());
             }
 
             // Create User
@@ -314,6 +389,7 @@ namespace Orari.Controllers
         }
 
         // Course Management
+        [AllowAnonymous]
         [HttpGet("courses")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAllCourses()
@@ -339,7 +415,7 @@ namespace Orari.Controllers
         {
             var courses = await _courseService.GetAllCoursesAsync();
             
-            // Map to DTOs with enrollment information
+            // Map to DTOs without accessing Enrollments navigation property to avoid circular references
             var courseDtos = new List<CourseWithEnrollmentsDTO>();
             
             foreach (var course in courses)
@@ -351,13 +427,8 @@ namespace Orari.Controllers
                     Credits = course.Credits,
                     PId = course.PId,
                     Profesor = course.Profesor,
-                    Enrollments = course.Enrollments?.Select(e => new Orari.DTO.EnrollmentDTO.EnrollmentSummaryDTO
-                    {
-                        EId = e.EId,
-                        StudentId = e.StudentId,
-                        StudentName = $"{e.Student?.FirstName} {e.Student?.LastName}".Trim(),
-                        StudentEmail = e.Student?.Email ?? string.Empty
-                    }).ToList() ?? new List<Orari.DTO.EnrollmentDTO.EnrollmentSummaryDTO>()
+                    // Don't access Enrollments navigation property to avoid circular reference
+                    Enrollments = new List<Orari.DTO.EnrollmentDTO.EnrollmentSummaryDTO>()
                 };
                 
                 courseDtos.Add(courseDto);
@@ -408,6 +479,37 @@ namespace Orari.Controllers
 
             await _courseService.DeleteCourseAsync(id);
             return NoContent();
+        }
+
+        [HttpPut("courses/{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UpdateCourse(int id, [FromBody] PutCourseDTO putCourseDTO)
+        {
+            try
+            {
+                var existingCourse = await _courseService.GetCourseByIdAsync(id);
+                if (existingCourse == null)
+                {
+                    return NotFound("Course not found");
+                }
+
+                // Update basic course properties
+                if (!string.IsNullOrEmpty(putCourseDTO.CName))
+                    existingCourse.CName = putCourseDTO.CName;
+                if (putCourseDTO.Credits > 0)
+                    existingCourse.Credits = putCourseDTO.Credits;
+                if (!string.IsNullOrEmpty(putCourseDTO.ProfessorName))
+                    existingCourse.Profesor = putCourseDTO.ProfessorName;
+
+                var updatedCourse = await _courseService.UpdateCourseAsync(existingCourse);
+                return Ok(updatedCourse);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         // Enrollment Management
@@ -472,9 +574,28 @@ namespace Orari.Controllers
         public async Task<IActionResult> GetAllSchedules()
         {
             var schedules = await _scheduleService.GetAllSchedulesAsync();
-            return Ok(schedules);
+            
+            // Map to DTOs to avoid circular references
+            var scheduleDtos = schedules.Select(s => new GetDelScheduleDTO
+            {
+                SId = s.SId,
+                Date = s.Date,
+                StartTime = s.StartTime,
+                EndTime = s.EndTime,
+                RId = s.RId,
+                ProfessorId = s.ProfessorId,
+                CId = s.CId,
+                EId = s.EId,
+                RecurringScheduleId = s.RecurringScheduleId,
+                RoomName = s.Room?.RName,
+                CourseName = s.Course?.CName,
+                ProfessorName = s.Professor != null ? $"{s.Professor.FirstName} {s.Professor.LastName}".Trim() : null
+            });
+            
+            return Ok(scheduleDtos);
         }
 
+        [AllowAnonymous]
         [HttpGet("rooms")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAllRooms()
@@ -537,9 +658,44 @@ namespace Orari.Controllers
                 return BadRequest("Schedule data is required");
             }
 
-            // TODO: Implement schedule creation logic
-            // var createdSchedule = await _scheduleService.CreateScheduleAsync(schedule);
-            return CreatedAtAction(nameof(GetAllSchedules), null, schedule);
+            try
+            {
+                // Get the required entities
+                var room = await _roomService.GetRoomByIdAsync(schedule.RId);
+                var course = await _courseService.GetCourseByIdAsync(schedule.CId);
+                
+                if (room == null)
+                {
+                    return BadRequest("Room not found");
+                }
+                
+                if (course == null)
+                {
+                    return BadRequest("Course not found");
+                }
+
+                // Map the PostScheduleDTO to the Schedules model
+                var scheduleModel = new Schedules
+                {
+                    Date = schedule.Date,
+                    StartTime = schedule.StartTime,
+                    EndTime = schedule.EndTime,
+                    RId = schedule.RId,
+                    ProfessorId = schedule.ProfessorId,
+                    CId = schedule.CId,
+                    Room = room,
+                    Course = course,
+                    EId = null,  // No exam initially
+                    Exam = null
+                };
+
+                var createdSchedule = await _scheduleService.CreateScheduleAsync(scheduleModel);
+                return CreatedAtAction(nameof(GetAllSchedules), new { id = createdSchedule.SId }, createdSchedule);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("schedules/{id}")]
@@ -564,9 +720,8 @@ namespace Orari.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteSchedule(int id)
         {
-            // TODO: Implement schedule deletion logic
-            // var result = await _scheduleService.DeleteScheduleAsync(id);
-            // if (!result) return NotFound("Schedule not found");
+            var result = await _scheduleService.DeleteScheduleAsync(id);
+            if (!result) return NotFound("Schedule not found");
             return NoContent();
         }
     }

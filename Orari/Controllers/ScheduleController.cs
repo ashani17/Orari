@@ -8,6 +8,8 @@ using Orari.Interfaces;
 using Orari.Models;
 using Orari.Repository;
 using Orari.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Orari.Controllers
 {
@@ -237,6 +239,81 @@ namespace Orari.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        [HttpGet("student/{studentId}")]
+        [ProducesResponseType(typeof(IEnumerable<Schedules>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetSchedulesByStudent(string studentId)
+        {
+            var schedules = await _scheduleService.GetSchedulesByStudentAsync(studentId);
+            return Ok(schedules);
+        }
+
+        [HttpGet("dashboard-full")]
+        public async Task<IActionResult> GetFullScheduleDashboard(
+            [FromQuery] int? year = null,
+            [FromQuery] DateTime? weekStart = null,
+            [FromQuery] DateTime? weekEnd = null)
+        {
+            // Eager load all related data
+            using (var scope = HttpContext.RequestServices.CreateScope())
+            {
+                var db = (Orari.DataDbContext.AppDbContext)scope.ServiceProvider.GetService(typeof(Orari.DataDbContext.AppDbContext));
+                var schedulesQuery = db.Schedules
+                    .Include(s => s.Room)
+                    .Include(s => s.Professor)
+                    .Include(s => s.Course)
+                        .ThenInclude(c => c.StudyProgramCourse)
+                            .ThenInclude(spc => spc.StudyProgram)
+                                .ThenInclude(sp => sp.Departments)
+                    .AsQueryable();
+
+                if (year.HasValue)
+                {
+                    schedulesQuery = schedulesQuery.Where(s => s.Date.Year == year.Value);
+                }
+
+                // Add week filtering if provided
+                if (weekStart.HasValue && weekEnd.HasValue)
+                {
+                    schedulesQuery = schedulesQuery.Where(s => s.Date >= DateOnly.FromDateTime(weekStart.Value) && s.Date <= DateOnly.FromDateTime(weekEnd.Value));
+                }
+
+                var schedules = await schedulesQuery.ToListAsync();
+
+                var result = schedules.Select(s => {
+                    return new Orari.DTO.ScheduleDTO.GetFullScheduleDTO
+                    {
+                        SId = s.SId,
+                        Date = s.Date,
+                        StartTime = s.StartTime,
+                        EndTime = s.EndTime,
+                        RId = s.RId,
+                        RoomName = s.Room?.RName ?? string.Empty,
+                        RoomType = s.Room?.RType ?? string.Empty,
+                        RoomCapacity = s.Room?.RCapacity ?? 0,
+                        RoomDescription = s.Room?.RDescription ?? string.Empty,
+                        ProfessorId = s.ProfessorId,
+                        ProfessorFirstName = s.Professor?.FirstName,
+                        ProfessorLastName = s.Professor?.LastName,
+                        ProfessorEmail = s.Professor?.Email,
+                        CId = s.CId,
+                        CourseName = s.Course?.CName ?? string.Empty,
+                        Credits = s.Course?.Credits ?? 0
+                    };
+                }).ToList();
+
+                return Ok(result);
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpGet("rooms")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAllRooms()
+        {
+            var rooms = await _roomService.GetAllRooms();
+            return Ok(rooms);
         }
     }
 }

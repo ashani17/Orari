@@ -19,6 +19,7 @@ namespace Orari.Repository
             return await _context.Courses
                 .Include(c => c.Enrollments)
                 .Include(c => c.StudyProgramCourse)
+                    .ThenInclude(spc => spc.StudyProgram)
                 .ToListAsync();
         }
 
@@ -27,6 +28,7 @@ namespace Orari.Repository
             return await _context.Courses
                 .Include(c => c.Enrollments)
                 .Include(c => c.StudyProgramCourse)
+                    .ThenInclude(spc => spc.StudyProgram)
                 .FirstOrDefaultAsync(c => c.CId == id);
         }
 
@@ -47,6 +49,16 @@ namespace Orari.Repository
 
         public async Task<Courses> UpdateCourseAsync(Courses course)
         {
+            // Remove old StudyProgramCourse relationships
+            var oldLinks = _context.StudyProgramCourses.Where(spc => spc.CId == course.CId);
+            _context.StudyProgramCourses.RemoveRange(oldLinks);
+
+            // Add new StudyProgramCourse relationships from the course object
+            foreach (var spc in course.StudyProgramCourse)
+            {
+                _context.StudyProgramCourses.Add(spc);
+            }
+
             _context.Courses.Update(course);
             await _context.SaveChangesAsync();
             return course;
@@ -75,15 +87,6 @@ namespace Orari.Repository
         {
             await _context.StudyProgramCourses.AddAsync(studyProgramCourse);
             await _context.SaveChangesAsync();
-        }
-
-        public async Task<IEnumerable<Courses>> GetCoursesByStudyProgramAsync(int studyProgramId)
-        {
-            return await _context.StudyProgramCourses
-                .Where(spc => spc.SPId == studyProgramId)
-                .Include(spc => spc.Course)
-                .Select(spc => spc.Course)
-                .ToListAsync();
         }
     }
 }

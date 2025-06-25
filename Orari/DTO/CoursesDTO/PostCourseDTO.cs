@@ -16,8 +16,6 @@ namespace Orari.DTO.CoursesDTO
 
         [JsonPropertyName("profesor")]
         public string Profesor { get; set; } = string.Empty;
-
-        public int StudyProgramId { get; set; }
     }
 
     public class ProfesorForCourseDTO

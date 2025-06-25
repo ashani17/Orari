@@ -12,5 +12,6 @@ namespace Orari.Interfaces
         Task<bool> DeleteScheduleAsync(int id);
         Task<IEnumerable<Schedules>> GetSchedulesByCourseAsync(int courseId);
         Task<IEnumerable<Schedules>> GetSchedulesByProfessorAsync(string professorId);
+        Task<IEnumerable<Schedules>> GetSchedulesByStudentAsync(string studentId);
     }
 }

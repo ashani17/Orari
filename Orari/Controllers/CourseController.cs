@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Orari.DataDbContext;
 using Orari.DTO.CoursesDTO;
 using Orari.Interfaces;
@@ -19,6 +20,7 @@ namespace Orari.Controllers
             _courseService = courseService;
         }
 
+        [AllowAnonymous]
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<GetDelCourseDTO>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAllCourses()
@@ -54,11 +56,22 @@ namespace Orari.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(Courses), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CreateCourse([FromBody] Courses course)
+        public async Task<IActionResult> CreateCourse([FromBody] PostCourseDTO dto)
         {
             try
             {
+                var course = new Courses
+                {
+                    CName = dto.CName,
+                    Credits = dto.Credits,
+                    PId = dto.PId,
+                    Profesor = dto.Profesor,
+                    Enrollments = new List<Enrollments>(),
+                    StudyProgramCourse = new List<StudyProgramCourse>()
+                };
+
                 var createdCourse = await _courseService.CreateCourseAsync(course);
+
                 return CreatedAtAction(nameof(GetCourseById), new { id = createdCourse.CId }, createdCourse);
             }
             catch (Exception ex)
@@ -113,16 +126,8 @@ namespace Orari.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetCoursesByStudyProgram(int studyProgramId)
         {
-            try
-            {
-                // Since we removed study program functionality, return empty list for now
-                // This endpoint can be removed or updated based on requirements
-                return Ok(new List<Courses>());
-            }
-            catch (Exception ex)
-            {
-                return NotFound(ex.Message);
-            }
+            // Study program functionality removed. Endpoint kept for compatibility.
+            return Ok(new List<Courses>());
         }
     }
 }

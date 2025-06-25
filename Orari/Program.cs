@@ -22,9 +22,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: corsPolicyName,
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173") // React app's origin
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
+            policy.WithOrigins("http://localhost:5173", "http://localhost:5174") // React app's origins
+                  .AllowAnyHeader() // Allow all headers
+                  .AllowAnyMethod() // Allow all HTTP methods
                   .AllowCredentials();
         });
 });
@@ -75,7 +75,11 @@ builder.Services.AddScoped<IStudyProgramService, StudyProgramService>();
 
 // Configure JWT
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
-builder.Services.AddScoped<JwtTokenGenerator>();
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+
+builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IDomainValidationService, DomainValidationService>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -133,6 +137,8 @@ using (var scope = app.Services.CreateScope())
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
+    var adminFirstName = "Default";
+    var adminLastName = "Admin";
     var adminEmail = "admin@orari.com";
     var adminPassword = "Admin#2024!";
     var adminRole = "Admin";
@@ -159,11 +165,15 @@ using (var scope = app.Services.CreateScope())
     {
         var newAdmin = new User
         {
-            UserName = adminEmail,
-            Email = adminEmail,
-            EmailConfirmed = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UserName = "admin@admin.com",
+            Email = "admin@admin.com",
+            FirstName = "Admin",
+            LastName = "User",
+            EmailConfirmed = false,
+            PhoneNumberConfirmed = true,
+            TwoFactorEnabled = false,
+            LockoutEnabled = false,
+            AccessFailedCount = 0
         };
 
         var createResult = await userManager.CreateAsync(newAdmin, adminPassword);
@@ -176,6 +186,23 @@ using (var scope = app.Services.CreateScope())
         {
             var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
             throw new Exception($"Failed to create admin user: {errors}");
+        }
+    }
+    else
+    {
+        // Update existing admin user with first and last names if they're not set
+        if (string.IsNullOrEmpty(adminUser.FirstName) || string.IsNullOrEmpty(adminUser.LastName))
+        {
+            adminUser.FirstName = adminFirstName;
+            adminUser.LastName = adminLastName;
+            adminUser.UpdatedAt = DateTime.UtcNow;
+            
+            var updateResult = await userManager.UpdateAsync(adminUser);
+            if (!updateResult.Succeeded)
+            {
+                var errors = string.Join(", ", updateResult.Errors.Select(e => e.Description));
+                throw new Exception($"Failed to update admin user: {errors}");
+            }
         }
     }
 }
