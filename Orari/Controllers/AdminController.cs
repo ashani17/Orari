@@ -28,6 +28,8 @@ namespace Orari.Controllers
         private readonly IScheduleService _scheduleService;
         private readonly IRoomService _roomService;
         private readonly ILogger<AdminController> _logger;
+        private readonly IEmailService _emailService;
+        private readonly IDomainValidationService _domainValidationService;
 
         public AdminController(
             IEnrollmentService enrollmentService,
@@ -36,7 +38,9 @@ namespace Orari.Controllers
             ICourseService courseService,
             IScheduleService scheduleService,
             IRoomService roomService,
-            ILogger<AdminController> logger)
+            ILogger<AdminController> logger,
+            IEmailService emailService,
+            IDomainValidationService domainValidationService)
         {
             _enrollmentService = enrollmentService;
             _userManager = userManager;
@@ -45,6 +49,8 @@ namespace Orari.Controllers
             _scheduleService = scheduleService;
             _roomService = roomService;
             _logger = logger;
+            _emailService = emailService;
+            _domainValidationService = domainValidationService;
         }
 
         // User Management
@@ -150,105 +156,133 @@ namespace Orari.Controllers
         [HttpPost("users/student")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CreateStudent([FromBody] CreateStudentDTO student)
+        public async Task<IActionResult> CreateStudent([FromBody] CreateStudentDTO createStudentDTO)
         {
-            // Only admins can create students through this endpoint
-            // Public registration creates students automatically
-            if (student == null)
+            try
             {
-                return BadRequest("Student data is required");
-            }
+                // Validate email domain
+                if (!_domainValidationService.IsValidDomain(createStudentDTO.Email))
+                {
+                    return BadRequest(_domainValidationService.GetDomainValidationMessage());
+                }
 
-            // Create User
-            var user = new User
-            {
-                UserName = student.Email,
-                Email = student.Email,
-                FirstName = student.FirstName,
-                LastName = student.LastName,
-                EmailConfirmed = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+                var existingUser = await _userManager.FindByEmailAsync(createStudentDTO.Email);
+                if (existingUser != null)
+                {
+                    return BadRequest("User with this email already exists.");
+                }
 
-            var result = await _userManager.CreateAsync(user, student.Password);
-            if (!result.Succeeded)
-            {
+                var user = new User
+                {
+                    UserName = createStudentDTO.Email,
+                    Email = createStudentDTO.Email,
+                    FirstName = createStudentDTO.FirstName,
+                    LastName = createStudentDTO.LastName,
+                    EmailConfirmed = false, // Changed to false to require email confirmation
+                    PhoneNumberConfirmed = true,
+                    TwoFactorEnabled = false,
+                    LockoutEnabled = false,
+                    AccessFailedCount = 0,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                var result = await _userManager.CreateAsync(user, createStudentDTO.Password);
+                if (result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(user, "Student");
+
+                    // Generate email confirmation token
+                    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    var confirmationLink = Url.Action("ConfirmEmail", "Authentication", 
+                        new { userId = user.Id, token = token }, Request.Scheme);
+
+                    try
+                    {
+                        await _emailService.SendEmailConfirmationAsync(user.Email, confirmationLink, user.FirstName);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log the error but don't fail user creation
+                        _logger.LogError(ex, "Failed to send confirmation email to {Email}", user.Email);
+                    }
+
+                    return Ok(new { message = "Student created successfully. Please check your email to confirm your account." });
+                }
+
                 return BadRequest(result.Errors);
             }
-
-            // Add to Student role
-            if (!await _roleManager.RoleExistsAsync("Student"))
+            catch (Exception ex)
             {
-                await _roleManager.CreateAsync(new IdentityRole("Student"));
+                _logger.LogError(ex, "Error creating student");
+                return StatusCode(500, "Internal server error");
             }
-            await _userManager.AddToRoleAsync(user, "Student");
-
-            return CreatedAtAction(nameof(GetAllUsers), new { id = user.Id }, new { user.Id, user.Email, Roles = new[] { "Student" } });
         }
 
         [HttpPost("users/professor")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CreateProfessor([FromBody] CreateProfessorDTO professor)
+        public async Task<IActionResult> CreateProfessor([FromBody] CreateProfessorDTO createProfessorDTO)
         {
-            _logger.LogInformation("CreateProfessor endpoint called");
-            
-            // Log authentication info
-            _logger.LogInformation("User authenticated: {IsAuthenticated}", User.Identity?.IsAuthenticated);
-            _logger.LogInformation("User name: {UserName}", User.Identity?.Name);
-            
-            // Log user claims
-            var claims = User.Claims.Select(c => $"{c.Type}: {c.Value}").ToList();
-            _logger.LogInformation("User claims: {Claims}", string.Join(", ", claims));
-            
-            // Log user roles
-            var roles = User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToList();
-            _logger.LogInformation("User roles: {Roles}", string.Join(", ", roles));
-            
-            // Only admins can create professors - this endpoint is protected by [Authorize(Roles = "Admin")]
-            if (professor == null)
+            try
             {
-                _logger.LogWarning("CreateProfessor called with null professor data");
-                return BadRequest("Professor data is required");
-            }
+                // Validate email domain
+                if (!_domainValidationService.IsValidDomain(createProfessorDTO.Email))
+                {
+                    return BadRequest(_domainValidationService.GetDomainValidationMessage());
+                }
 
-            _logger.LogInformation("Creating professor with email: {Email}", professor.Email);
+                var existingUser = await _userManager.FindByEmailAsync(createProfessorDTO.Email);
+                if (existingUser != null)
+                {
+                    return BadRequest("User with this email already exists.");
+                }
 
-            // Create User
-            var user = new User
-            {
-                UserName = professor.Email,
-                Email = professor.Email,
-                FirstName = professor.FirstName,
-                LastName = professor.LastName,
-                Phone = professor.Phone,
-                EmailConfirmed = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+                var user = new User
+                {
+                    UserName = createProfessorDTO.Email,
+                    Email = createProfessorDTO.Email,
+                    FirstName = createProfessorDTO.FirstName,
+                    LastName = createProfessorDTO.LastName,
+                    EmailConfirmed = false, // Changed to false to require email confirmation
+                    PhoneNumberConfirmed = true,
+                    TwoFactorEnabled = false,
+                    LockoutEnabled = false,
+                    AccessFailedCount = 0,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
 
-            var result = await _userManager.CreateAsync(user, professor.Password);
-            if (!result.Succeeded)
-            {
-                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                _logger.LogError("Failed to create professor: {Errors}", errors);
+                var result = await _userManager.CreateAsync(user, createProfessorDTO.Password);
+                if (result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(user, "Professor");
+
+                    // Generate email confirmation token
+                    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    var confirmationLink = Url.Action("ConfirmEmail", "Authentication", 
+                        new { userId = user.Id, token = token }, Request.Scheme);
+
+                    try
+                    {
+                        await _emailService.SendEmailConfirmationAsync(user.Email, confirmationLink, user.FirstName);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log the error but don't fail user creation
+                        _logger.LogError(ex, "Failed to send confirmation email to {Email}", user.Email);
+                    }
+
+                    return Ok(new { message = "Professor created successfully. Please check your email to confirm your account." });
+                }
+
                 return BadRequest(result.Errors);
             }
-
-            _logger.LogInformation("Professor user created successfully with ID: {UserId}", user.Id);
-
-            // Add to Professor role
-            if (!await _roleManager.RoleExistsAsync("Professor"))
+            catch (Exception ex)
             {
-                _logger.LogInformation("Professor role doesn't exist, creating it");
-                await _roleManager.CreateAsync(new IdentityRole("Professor"));
+                _logger.LogError(ex, "Error creating professor");
+                return StatusCode(500, "Internal server error");
             }
-            await _userManager.AddToRoleAsync(user, "Professor");
-
-            _logger.LogInformation("Professor role assigned successfully");
-
-            return CreatedAtAction(nameof(GetAllUsers), new { id = user.Id }, new { user.Id, user.Email, Roles = new[] { "Professor" } });
         }
 
         [HttpPost("users/admin")]
@@ -260,6 +294,12 @@ namespace Orari.Controllers
             if (admin == null)
             {
                 return BadRequest("Admin data is required");
+            }
+
+            // Validate email domain
+            if (!_domainValidationService.IsValidDomain(admin.Email))
+            {
+                return BadRequest(_domainValidationService.GetDomainValidationMessage());
             }
 
             // Create User
