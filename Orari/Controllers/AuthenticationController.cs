@@ -115,8 +115,8 @@ namespace Orari.Controllers
                         {
                             Id = user.Id,
                             Email = user.Email!,
-                            Name = user.FirstName,
-                            Surname = user.LastName,
+                            name = user.FirstName,
+                            surname = user.LastName,
                             Role = role
                         }
                     };
@@ -182,8 +182,8 @@ namespace Orari.Controllers
                     {
                         Id = user.Id,
                         Email = user.Email!,
-                        Name = user.FirstName,
-                        Surname = user.LastName,
+                        name = user.FirstName,
+                        surname = user.LastName,
                         Role = role
                     }
                 };
@@ -260,8 +260,8 @@ namespace Orari.Controllers
                 {
                     Id = user.Id,
                     Email = user.Email!,
-                    Name = user.FirstName,
-                    Surname = user.LastName,
+                    name = user.FirstName,
+                    surname = user.LastName,
                     Role = "Admin"
                 }
             };
@@ -285,8 +285,8 @@ namespace Orari.Controllers
     {
         public string Id { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string Surname { get; set; } = string.Empty;
+        public string name { get; set; } = string.Empty;
+        public string surname { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
     }
 

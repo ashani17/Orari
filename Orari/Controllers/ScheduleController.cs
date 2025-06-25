@@ -250,7 +250,10 @@ namespace Orari.Controllers
         }
 
         [HttpGet("dashboard-full")]
-        public async Task<IActionResult> GetFullScheduleDashboard([FromQuery] int? year = null)
+        public async Task<IActionResult> GetFullScheduleDashboard(
+            [FromQuery] int? year = null,
+            [FromQuery] DateTime? weekStart = null,
+            [FromQuery] DateTime? weekEnd = null)
         {
             // Eager load all related data
             using (var scope = HttpContext.RequestServices.CreateScope())
@@ -270,12 +273,15 @@ namespace Orari.Controllers
                     schedulesQuery = schedulesQuery.Where(s => s.Date.Year == year.Value);
                 }
 
+                // Add week filtering if provided
+                if (weekStart.HasValue && weekEnd.HasValue)
+                {
+                    schedulesQuery = schedulesQuery.Where(s => s.Date >= DateOnly.FromDateTime(weekStart.Value) && s.Date <= DateOnly.FromDateTime(weekEnd.Value));
+                }
+
                 var schedules = await schedulesQuery.ToListAsync();
 
                 var result = schedules.Select(s => {
-                    var spc = s.Course.StudyProgramCourse.FirstOrDefault();
-                    var sp = spc?.StudyProgram;
-                    var dept = sp?.Departments;
                     return new Orari.DTO.ScheduleDTO.GetFullScheduleDTO
                     {
                         SId = s.SId,
@@ -293,12 +299,7 @@ namespace Orari.Controllers
                         ProfessorEmail = s.Professor?.Email,
                         CId = s.CId,
                         CourseName = s.Course?.CName ?? string.Empty,
-                        Credits = s.Course?.Credits ?? 0,
-                        StudyProgramId = sp?.SPId,
-                        StudyProgramName = sp?.SPName,
-                        DepartmentId = dept?.DId,
-                        DepartmentName = dept?.DName,
-                        Year = s.Date.Year
+                        Credits = s.Course?.Credits ?? 0
                     };
                 }).ToList();
 
