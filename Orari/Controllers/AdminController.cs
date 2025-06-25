@@ -83,11 +83,11 @@ namespace Orari.Controllers
             var students = await _userManager.GetUsersInRoleAsync("Student");
             var studentList = students.Select(s => new
             {
-                Id = s.Id,
-                Email = s.Email,
-                FirstName = s.FirstName,
-                LastName = s.LastName,
-                CreatedAt = s.CreatedAt
+                id = s.Id,
+                email = s.Email,
+                firstName = s.FirstName,
+                lastName = s.LastName,
+                createdAt = s.CreatedAt
             });
             
             return Ok(studentList);
@@ -101,13 +101,13 @@ namespace Orari.Controllers
             var professors = await _userManager.GetUsersInRoleAsync("Professor");
             var professorList = professors.Select(p => new
             {
-                Id = p.Id,
-                Email = p.Email,
-                FirstName = p.FirstName,
-                LastName = p.LastName,
-                Phone = p.Phone,
-                Availability = p.Availability,
-                CreatedAt = p.CreatedAt
+                id = p.Id,
+                email = p.Email,
+                firstName = p.FirstName,
+                lastName = p.LastName,
+                phone = p.Phone,
+                availability = p.Availability,
+                createdAt = p.CreatedAt
             });
             
             return Ok(professorList);
@@ -120,11 +120,11 @@ namespace Orari.Controllers
             var admins = await _userManager.GetUsersInRoleAsync("Admin");
             var adminList = admins.Select(a => new
             {
-                Id = a.Id,
-                Email = a.Email,
-                FirstName = a.FirstName,
-                LastName = a.LastName,
-                CreatedAt = a.CreatedAt
+                id = a.Id,
+                email = a.Email,
+                firstName = a.FirstName,
+                lastName = a.LastName,
+                createdAt = a.CreatedAt
             });
             
             return Ok(adminList);
@@ -138,11 +138,11 @@ namespace Orari.Controllers
             var admins = await _userManager.GetUsersInRoleAsync("Admin");
             var adminList = admins.Select(a => new
             {
-                Id = a.Id,
-                Email = a.Email,
-                FirstName = a.FirstName,
-                LastName = a.LastName,
-                CreatedAt = a.CreatedAt
+                id = a.Id,
+                email = a.Email,
+                firstName = a.FirstName,
+                lastName = a.LastName,
+                createdAt = a.CreatedAt
             });
             return Ok(adminList);
         }
@@ -462,20 +462,6 @@ namespace Orari.Controllers
                     existingCourse.Credits = putCourseDTO.Credits;
                 if (!string.IsNullOrEmpty(putCourseDTO.ProfessorName))
                     existingCourse.Profesor = putCourseDTO.ProfessorName;
-
-                // Update StudyProgramCourse relationship
-                // Remove existing relationships
-                existingCourse.StudyProgramCourse.Clear();
-                
-                // Add new relationship if StudyProgramId is greater than 0
-                if (putCourseDTO.StudyProgramId > 0)
-                {
-                    existingCourse.StudyProgramCourse.Add(new Orari.Models.StudyProgramCourse
-                    {
-                        SPId = putCourseDTO.StudyProgramId,
-                        CId = existingCourse.CId
-                    });
-                }
 
                 var updatedCourse = await _courseService.UpdateCourseAsync(existingCourse);
                 return Ok(updatedCourse);

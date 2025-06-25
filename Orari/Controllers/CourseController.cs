@@ -34,9 +34,7 @@ namespace Orari.Controllers
                 CName = c.CName,
                 Credits = c.Credits,
                 PId = c.PId,
-                Profesor = c.Profesor,
-                StudyProgramId = c.StudyProgramCourse.FirstOrDefault()?.SPId,
-                StudyProgramName = c.StudyProgramCourse.FirstOrDefault()?.StudyProgram?.SPName
+                Profesor = c.Profesor
             });
             
             return Ok(courseDtos);
@@ -74,22 +72,6 @@ namespace Orari.Controllers
 
                 var createdCourse = await _courseService.CreateCourseAsync(course);
 
-                // Add StudyProgramCourse relationship
-                if (dto.StudyProgramId > 0)
-                {
-                    using (var scope = HttpContext.RequestServices.CreateScope())
-                    {
-                        var db = (Orari.DataDbContext.AppDbContext)scope.ServiceProvider.GetService(typeof(Orari.DataDbContext.AppDbContext));
-                        var spc = new StudyProgramCourse
-                        {
-                            SPId = dto.StudyProgramId,
-                            CId = createdCourse.CId
-                        };
-                        db.StudyProgramCourses.Add(spc);
-                        db.SaveChanges();
-                    }
-                }
-
                 return CreatedAtAction(nameof(GetCourseById), new { id = createdCourse.CId }, createdCourse);
             }
             catch (Exception ex)
@@ -115,19 +97,6 @@ namespace Orari.Controllers
                 existingCourse.CName = putCourseDTO.CName;
                 existingCourse.Credits = putCourseDTO.Credits;
                 existingCourse.Profesor = putCourseDTO.ProfessorName ?? existingCourse.Profesor;
-
-                // Update StudyProgramCourse relationship
-                if (putCourseDTO.StudyProgramId > 0)
-                {
-                    // Remove old relationships
-                    existingCourse.StudyProgramCourse.Clear();
-                    // Add new relationship
-                    existingCourse.StudyProgramCourse.Add(new Orari.Models.StudyProgramCourse
-                    {
-                        SPId = putCourseDTO.StudyProgramId,
-                        CId = existingCourse.CId
-                    });
-                }
 
                 var updatedCourse = await _courseService.UpdateCourseAsync(existingCourse);
                 return Ok(updatedCourse);
@@ -157,16 +126,8 @@ namespace Orari.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetCoursesByStudyProgram(int studyProgramId)
         {
-            try
-            {
-                // Since we removed study program functionality, return empty list for now
-                // This endpoint can be removed or updated based on requirements
-                return Ok(new List<Courses>());
-            }
-            catch (Exception ex)
-            {
-                return NotFound(ex.Message);
-            }
+            // Study program functionality removed. Endpoint kept for compatibility.
+            return Ok(new List<Courses>());
         }
     }
 }

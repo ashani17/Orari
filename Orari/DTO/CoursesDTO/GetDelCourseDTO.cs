@@ -9,8 +9,6 @@ namespace Orari.DTO.CoursesDTO
         public int Credits { get; set; }
         public string PId { get; set; } = string.Empty;
         public string Profesor { get; set; } = string.Empty;
-        public int? StudyProgramId { get; set; }
-        public string? StudyProgramName { get; set; }
     }
 
     public class CourseWithEnrollmentsDTO

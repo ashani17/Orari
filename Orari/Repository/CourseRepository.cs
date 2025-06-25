@@ -88,14 +88,5 @@ namespace Orari.Repository
             await _context.StudyProgramCourses.AddAsync(studyProgramCourse);
             await _context.SaveChangesAsync();
         }
-
-        public async Task<IEnumerable<Courses>> GetCoursesByStudyProgramAsync(int studyProgramId)
-        {
-            return await _context.StudyProgramCourses
-                .Where(spc => spc.SPId == studyProgramId)
-                .Include(spc => spc.Course)
-                .Select(spc => spc.Course)
-                .ToListAsync();
-        }
     }
 }
