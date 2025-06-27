@@ -11,6 +11,8 @@ namespace Orari.Models
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
         
+        public string? Description { get; set; }  // Optional description
+        
         public int RId { get; set; }
         [ForeignKey("RId")]
         public Rooms Room { get; set; } = null!;

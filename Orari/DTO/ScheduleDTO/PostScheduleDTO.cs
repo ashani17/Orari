@@ -23,5 +23,11 @@ namespace Orari.DTO.ScheduleDTO
 
         [Required]
         public int CId { get; set; }  // Course ID
+
+        public string? Description { get; set; }  // Optional description
+
+        public bool IsExam { get; set; } = false;  // Whether this is an exam
+
+        public string? ExamName { get; set; }  // Exam name if IsExam is true
     }
 }

@@ -75,7 +75,11 @@ builder.Services.AddScoped<IStudyProgramService, StudyProgramService>();
 
 // Configure JWT
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
-builder.Services.AddScoped<JwtTokenGenerator>();
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+
+builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IDomainValidationService, DomainValidationService>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -161,13 +165,15 @@ using (var scope = app.Services.CreateScope())
     {
         var newAdmin = new User
         {
-            UserName = adminEmail,
-            Email = adminEmail,
-            FirstName = adminFirstName,
-            LastName = adminLastName,
-            EmailConfirmed = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UserName = "admin@admin.com",
+            Email = "admin@admin.com",
+            FirstName = "Admin",
+            LastName = "User",
+            EmailConfirmed = false,
+            PhoneNumberConfirmed = true,
+            TwoFactorEnabled = false,
+            LockoutEnabled = false,
+            AccessFailedCount = 0
         };
 
         var createResult = await userManager.CreateAsync(newAdmin, adminPassword);
