@@ -83,6 +83,7 @@ namespace Orari.Controllers
                     Date = schedule.Date,
                     StartTime = schedule.StartTime,
                     EndTime = schedule.EndTime,
+                    Description = schedule.Description,
                     RId = schedule.RId,
                     ProfessorId = schedule.ProfessorId,
                     CId = schedule.CId,
@@ -93,6 +94,32 @@ namespace Orari.Controllers
                 };
 
                 var createdSchedule = await _scheduleService.CreateScheduleAsync(scheduleModel);
+
+                // If this is an exam, create an exam record
+                if (schedule.IsExam && !string.IsNullOrEmpty(schedule.ExamName))
+                {
+                    var exam = new Exams
+                    {
+                        ExamName = schedule.ExamName,
+                        ExamDate = schedule.Date.ToDateTime(TimeOnly.MinValue), // Convert DateOnly to DateTime
+                        StartTime = schedule.StartTime.ToTimeSpan(), // Convert TimeOnly to TimeSpan
+                        EndTime = schedule.EndTime.ToTimeSpan(), // Convert TimeOnly to TimeSpan
+                        CId = schedule.CId,
+                        ProfessorId = schedule.ProfessorId,
+                        RId = schedule.RId,
+                        SCId = createdSchedule.SId,
+                        Course = course,
+                        Room = room
+                    };
+
+                    var createdExam = await _examService.CreateExamAsync(exam);
+
+                    // Update the schedule with the exam ID
+                    createdSchedule.EId = createdExam.EId;
+                    createdSchedule.Exam = createdExam;
+                    await _scheduleService.UpdateScheduleAsync(createdSchedule);
+                }
+
                 return CreatedAtAction(nameof(GetScheduleById), new { id = createdSchedule.SId }, createdSchedule);
             }
             catch (Exception ex)

@@ -30,6 +30,7 @@ namespace Orari.Controllers
         private readonly ILogger<AdminController> _logger;
         private readonly IEmailService _emailService;
         private readonly IDomainValidationService _domainValidationService;
+        private readonly IExamService _examService;
 
         public AdminController(
             IEnrollmentService enrollmentService,
@@ -40,7 +41,8 @@ namespace Orari.Controllers
             IRoomService roomService,
             ILogger<AdminController> logger,
             IEmailService emailService,
-            IDomainValidationService domainValidationService)
+            IDomainValidationService domainValidationService,
+            IExamService examService)
         {
             _enrollmentService = enrollmentService;
             _userManager = userManager;
@@ -51,6 +53,7 @@ namespace Orari.Controllers
             _logger = logger;
             _emailService = emailService;
             _domainValidationService = domainValidationService;
+            _examService = examService;
         }
 
         // User Management
@@ -159,7 +162,7 @@ namespace Orari.Controllers
         public async Task<IActionResult> CreateStudent([FromBody] CreateStudentDTO createStudentDTO)
         {
             try
-            {
+        {
                 // Validate email domain
                 if (!_domainValidationService.IsValidDomain(createStudentDTO.Email))
                 {
@@ -168,12 +171,12 @@ namespace Orari.Controllers
 
                 var existingUser = await _userManager.FindByEmailAsync(createStudentDTO.Email);
                 if (existingUser != null)
-                {
+            {
                     return BadRequest("User with this email already exists.");
-                }
+            }
 
-                var user = new User
-                {
+            var user = new User
+            {
                     UserName = createStudentDTO.Email,
                     Email = createStudentDTO.Email,
                     FirstName = createStudentDTO.FirstName,
@@ -183,13 +186,13 @@ namespace Orari.Controllers
                     TwoFactorEnabled = false,
                     LockoutEnabled = false,
                     AccessFailedCount = 0,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
 
                 var result = await _userManager.CreateAsync(user, createStudentDTO.Password);
                 if (result.Succeeded)
-                {
+            {
                     await _userManager.AddToRoleAsync(user, "Student");
 
                     // Generate email confirmation token
@@ -234,12 +237,12 @@ namespace Orari.Controllers
 
                 var existingUser = await _userManager.FindByEmailAsync(createProfessorDTO.Email);
                 if (existingUser != null)
-                {
+            {
                     return BadRequest("User with this email already exists.");
                 }
 
-                var user = new User
-                {
+            var user = new User
+            {
                     UserName = createProfessorDTO.Email,
                     Email = createProfessorDTO.Email,
                     FirstName = createProfessorDTO.FirstName,
@@ -249,13 +252,13 @@ namespace Orari.Controllers
                     TwoFactorEnabled = false,
                     LockoutEnabled = false,
                     AccessFailedCount = 0,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
 
                 var result = await _userManager.CreateAsync(user, createProfessorDTO.Password);
                 if (result.Succeeded)
-                {
+            {
                     await _userManager.AddToRoleAsync(user, "Professor");
 
                     // Generate email confirmation token
@@ -582,6 +585,7 @@ namespace Orari.Controllers
                 Date = s.Date,
                 StartTime = s.StartTime,
                 EndTime = s.EndTime,
+                Description = s.Description,
                 RId = s.RId,
                 ProfessorId = s.ProfessorId,
                 CId = s.CId,
@@ -680,6 +684,7 @@ namespace Orari.Controllers
                     Date = schedule.Date,
                     StartTime = schedule.StartTime,
                     EndTime = schedule.EndTime,
+                    Description = schedule.Description,
                     RId = schedule.RId,
                     ProfessorId = schedule.ProfessorId,
                     CId = schedule.CId,
@@ -690,6 +695,32 @@ namespace Orari.Controllers
                 };
 
                 var createdSchedule = await _scheduleService.CreateScheduleAsync(scheduleModel);
+
+                // If this is an exam, create an exam record
+                if (schedule.IsExam && !string.IsNullOrEmpty(schedule.ExamName))
+                {
+                    var exam = new Exams
+                    {
+                        ExamName = schedule.ExamName,
+                        ExamDate = schedule.Date.ToDateTime(TimeOnly.MinValue), // Convert DateOnly to DateTime
+                        StartTime = schedule.StartTime.ToTimeSpan(), // Convert TimeOnly to TimeSpan
+                        EndTime = schedule.EndTime.ToTimeSpan(), // Convert TimeOnly to TimeSpan
+                        CId = schedule.CId,
+                        ProfessorId = schedule.ProfessorId,
+                        RId = schedule.RId,
+                        SCId = createdSchedule.SId,
+                        Course = course,
+                        Room = room
+                    };
+
+                    var createdExam = await _examService.CreateExamAsync(exam);
+
+                    // Update the schedule with the exam ID
+                    createdSchedule.EId = createdExam.EId;
+                    createdSchedule.Exam = createdExam;
+                    await _scheduleService.UpdateScheduleAsync(createdSchedule);
+                }
+
                 return CreatedAtAction(nameof(GetAllSchedules), new { id = createdSchedule.SId }, createdSchedule);
             }
             catch (Exception ex)
