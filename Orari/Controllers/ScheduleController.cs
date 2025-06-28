@@ -309,6 +309,11 @@ namespace Orari.Controllers
                 var schedules = await schedulesQuery.ToListAsync();
 
                 var result = schedules.Select(s => {
+                    // Get study program information from the first associated study program
+                    var studyProgramCourse = s.Course?.StudyProgramCourse?.FirstOrDefault();
+                    var studyProgram = studyProgramCourse?.StudyProgram;
+                    var department = studyProgram?.Departments;
+                    
                     return new Orari.DTO.ScheduleDTO.GetFullScheduleDTO
                     {
                         SId = s.SId,
@@ -326,7 +331,13 @@ namespace Orari.Controllers
                         ProfessorEmail = s.Professor?.Email,
                         CId = s.CId,
                         CourseName = s.Course?.CName ?? string.Empty,
-                        Credits = s.Course?.Credits ?? 0
+                        Credits = s.Course?.Credits ?? 0,
+                        StudyProgramId = studyProgram?.SPId,
+                        StudyProgramName = studyProgram?.SPName,
+                        DepartmentId = department?.DId,
+                        DepartmentName = department?.DName,
+                        Year = studyProgramCourse?.Year ?? 0,
+                        AcademicYear = studyProgramCourse?.AcademicYear ?? string.Empty
                     };
                 }).ToList();
 

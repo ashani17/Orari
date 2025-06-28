@@ -2,6 +2,8 @@
 using Orari.DTO.StudyProgramDTO;
 using Orari.Interfaces;
 using Orari.Models;
+using Microsoft.EntityFrameworkCore;
+using Orari.DataDbContext;
 
 namespace Orari.Controllers
 {
@@ -65,21 +67,23 @@ namespace Orari.Controllers
 
             var updatedStudyProgram = await _studyProgramService.UpdateStudyProgramAsync(existingStudyProgram);
 
-            // --- Update StudyProgramCourse join table ---
+            // --- Update StudyProgramCourse join table with year and academic year ---
             using (var scope = HttpContext.RequestServices.CreateScope())
             {
                 var db = (Orari.DataDbContext.AppDbContext)scope.ServiceProvider.GetService(typeof(Orari.DataDbContext.AppDbContext));
                 var oldLinks = db.StudyProgramCourses.Where(spc => spc.SPId == id);
                 db.StudyProgramCourses.RemoveRange(oldLinks);
 
-                if (studyProgram.CourseIds != null)
+                if (studyProgram.CourseAssignments != null)
                 {
-                    foreach (var courseId in studyProgram.CourseIds)
+                    foreach (var assignment in studyProgram.CourseAssignments)
                     {
                         db.StudyProgramCourses.Add(new Orari.Models.StudyProgramCourse
                         {
                             SPId = id,
-                            CId = courseId
+                            CId = assignment.CourseId,
+                            Year = assignment.Year,
+                            AcademicYear = assignment.AcademicYear
                         });
                     }
                 }
@@ -89,7 +93,6 @@ namespace Orari.Controllers
 
             return Ok(updatedStudyProgram);
         }
-
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStudyProgramAsync([FromBody] GetDelStudyProgramDTO dto)
@@ -114,6 +117,54 @@ namespace Orari.Controllers
             return Ok(studyProgram);
         }
 
-    }
+        [HttpGet("{id}/schedules")]
+        public async Task<IActionResult> GetSchedulesByStudyProgram(int id, [FromQuery] int? year = null, [FromQuery] string? academicYear = null)
+        {
+            using (var scope = HttpContext.RequestServices.CreateScope())
+            {
+                var db = (Orari.DataDbContext.AppDbContext)scope.ServiceProvider.GetService(typeof(Orari.DataDbContext.AppDbContext));
+                
+                // Get course IDs for this study program
+                var courseIdsQuery = db.StudyProgramCourses
+                    .Where(spc => spc.SPId == id)
+                    .Select(spc => spc.CId);
 
+                // Apply year filter if provided
+                if (year.HasValue)
+                {
+                    courseIdsQuery = db.StudyProgramCourses
+                        .Where(spc => spc.SPId == id && spc.Year == year.Value)
+                        .Select(spc => spc.CId);
+                }
+
+                // Apply academic year filter if provided
+                if (!string.IsNullOrEmpty(academicYear))
+                {
+                    courseIdsQuery = db.StudyProgramCourses
+                        .Where(spc => spc.SPId == id && spc.AcademicYear == academicYear)
+                        .Select(spc => spc.CId);
+                }
+
+                var courseIds = await courseIdsQuery.ToListAsync();
+
+                if (!courseIds.Any())
+                {
+                    return Ok(new List<object>()); // Return empty list if no courses found
+                }
+
+                // Get schedules for these courses
+                var schedules = await db.Schedules
+                    .Where(s => courseIds.Contains(s.CId))
+                    .Include(s => s.Room)
+                    .Include(s => s.Professor)
+                    .Include(s => s.Course)
+                    .Include(s => s.Exam)
+                    .OrderBy(s => s.Date)
+                    .ThenBy(s => s.StartTime)
+                    .ToListAsync();
+
+                return Ok(schedules);
+            }
+        }
+    }
 }

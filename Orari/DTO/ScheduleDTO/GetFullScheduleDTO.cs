@@ -19,5 +19,11 @@ namespace Orari.DTO.ScheduleDTO
         public int CId { get; set; }
         public string CourseName { get; set; } = string.Empty;
         public int Credits { get; set; }
+        public int? StudyProgramId { get; set; }
+        public string? StudyProgramName { get; set; }
+        public int? DepartmentId { get; set; }
+        public string? DepartmentName { get; set; }
+        public int Year { get; set; } // 1, 2, or 3
+        public string AcademicYear { get; set; } = string.Empty; // e.g., "2023-2026"
     }
 } 
