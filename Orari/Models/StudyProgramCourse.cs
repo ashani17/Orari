@@ -13,6 +13,12 @@ namespace Orari.Models
         [ForeignKey("CId")]
         public int CId { get; set; }
         public Courses Course { get; set; } 
-
+        
+        // Year field (1, 2, or 3)
+        public int Year { get; set; }
+        
+        // Academic year field (e.g., "2023-2026")
+        [StringLength(20)]
+        public string AcademicYear { get; set; } = string.Empty;
     }
 }
