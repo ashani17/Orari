@@ -13,6 +13,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.ComponentModel.DataAnnotations;
+using QuestPDF.Infrastructure;
 
 namespace Orari.Controllers
 {
@@ -47,6 +48,8 @@ namespace Orari.Controllers
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
             _domainValidationService = domainValidationService ?? throw new ArgumentNullException(nameof(domainValidationService));
+
+            QuestPDF.Settings.License = LicenseType.Community;
         }
 
         [HttpPost("register")]

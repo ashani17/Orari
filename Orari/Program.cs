@@ -12,6 +12,10 @@ using Orari.Services;
 using Orari.Models;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using QuestPDF.Infrastructure;
+
+// Configure QuestPDF license
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 var corsPolicyName = "AllowFrontend";
@@ -80,6 +84,7 @@ builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Emai
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IDomainValidationService, DomainValidationService>();
+builder.Services.AddScoped<IPdfGenerateService, PdfGenerateService>();
 
 builder.Services.AddAuthentication(options =>
 {
