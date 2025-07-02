@@ -25,5 +25,6 @@ namespace Orari.DTO.ScheduleDTO
         public string? DepartmentName { get; set; }
         public int Year { get; set; } // 1, 2, or 3
         public string AcademicYear { get; set; } = string.Empty; // e.g., "2023-2026"
+        public string? Group { get; set; } // e.g., A1, A2, B1, etc.
     }
 } 

@@ -280,7 +280,13 @@ namespace Orari.Controllers
         public async Task<IActionResult> GetFullScheduleDashboard(
             [FromQuery] int? year = null,
             [FromQuery] DateTime? weekStart = null,
-            [FromQuery] DateTime? weekEnd = null)
+            [FromQuery] DateTime? weekEnd = null,
+            [FromQuery] string? studyProgram = null,
+            [FromQuery] string? professor = null,
+            [FromQuery] string? course = null,
+            [FromQuery] string? room = null,
+            [FromQuery] string? academicYear = null,
+            [FromQuery] string? group = null)
         {
             // Eager load all related data
             using (var scope = HttpContext.RequestServices.CreateScope())
@@ -295,9 +301,43 @@ namespace Orari.Controllers
                                 .ThenInclude(sp => sp.Departments)
                     .AsQueryable();
 
+                // Apply filters
                 if (year.HasValue)
                 {
                     schedulesQuery = schedulesQuery.Where(s => s.Date.Year == year.Value);
+                }
+
+                if (!string.IsNullOrEmpty(studyProgram))
+                {
+                    schedulesQuery = schedulesQuery.Where(s => s.Course.StudyProgramCourse.Any(spc => 
+                        spc.StudyProgram.SPName.ToLower().Contains(studyProgram.ToLower())));
+                }
+
+                if (!string.IsNullOrEmpty(professor))
+                {
+                    schedulesQuery = schedulesQuery.Where(s => 
+                        (s.Professor.FirstName + " " + s.Professor.LastName).ToLower().Contains(professor.ToLower()));
+                }
+
+                if (!string.IsNullOrEmpty(course))
+                {
+                    schedulesQuery = schedulesQuery.Where(s => s.Course.CName.ToLower().Contains(course.ToLower()));
+                }
+
+                if (!string.IsNullOrEmpty(room))
+                {
+                    schedulesQuery = schedulesQuery.Where(s => s.Room.RName.ToLower().Contains(room.ToLower()));
+                }
+
+                if (!string.IsNullOrEmpty(academicYear))
+                {
+                    schedulesQuery = schedulesQuery.Where(s => s.Course.StudyProgramCourse.Any(spc => 
+                        spc.AcademicYear == academicYear));
+                }
+
+                if (!string.IsNullOrEmpty(group))
+                {
+                    schedulesQuery = schedulesQuery.Where(s => s.Group != null && s.Group.ToLower().Contains(group.ToLower()));
                 }
 
                 // Add week filtering if provided
@@ -337,7 +377,8 @@ namespace Orari.Controllers
                         DepartmentId = department?.DId,
                         DepartmentName = department?.DName,
                         Year = studyProgramCourse?.Year ?? 0,
-                        AcademicYear = studyProgramCourse?.AcademicYear ?? string.Empty
+                        AcademicYear = studyProgramCourse?.AcademicYear ?? string.Empty,
+                        Group = s.Group // Add group to DTO
                     };
                 }).ToList();
 

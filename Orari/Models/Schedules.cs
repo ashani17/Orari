@@ -13,6 +13,9 @@ namespace Orari.Models
         
         public string? Description { get; set; }  // Optional description
         
+        // New: Group/Section field
+        public string? Group { get; set; } // e.g., A1, A2, B1, etc.
+        
         public int RId { get; set; }
         [ForeignKey("RId")]
         public Rooms Room { get; set; } = null!;
